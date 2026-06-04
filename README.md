@@ -139,6 +139,50 @@ Pulse:
 ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=300 -p channel:=coag
 ```
 
+## Design Decisions
+
+This section documents the rationale behind key component and architecture choices, for future reference and onboarding.
+
+### Microcontroller — ESP32-DevKitC-32E
+
+The ESP32-DevKitC-32E was chosen over bare modules (e.g. ESP32-WROOM) or alternative MCUs primarily for **prototyping velocity**. The DevKit form factor integrates:
+- USB-to-serial (CP2102) — no external UART chip needed
+- 3.3V LDO voltage regulator — no external power regulation needed
+- Decoupling capacitors and antenna — no RF design work needed
+- Boot/reset circuitry — no strapping resistors to design in
+
+This saved significant PCB complexity at the cost of board footprint (~55×28mm). For a first prototype in a research context, that tradeoff is correct. The ESP32 is also substantially overpowered for this application (dual-core 240MHz, Wi-Fi, BT) — a simpler MCU like an RP2040 or STM32 would be a tighter architectural fit — but the DevKit form factor and existing firmware ecosystem made it the pragmatic choice.
+
+The 3.3V GPIO logic level aligned naturally with the optocoupler pull-up rail, avoiding any level-shifting on the sense path.
+
+### Relay — Panasonic TQ2-L2-5V
+
+The TQ2-L2-5V was chosen because it is **SMD**, which keeps the PCB compact and avoids the mechanical stress of through-hole relay mounting. Key selection criteria:
+- SMD package — compatible with the rest of the SMD passive components
+- DPDT configuration — provides two independent contact sets per relay; only one (NO/COM) is used per relay in this design, leaving headroom if the circuit evolves
+- 5V coil — directly compatible with the USB 5V rail sourced from the ESP32 DevKit
+- Low coil current (~36mA) — driveable by a 2N3904 NPN transistor from a 3.3V GPIO without needing a dedicated gate driver
+
+Flyback diodes (1N4148) are placed across each coil to suppress the inductive voltage spike on relay de-energization.
+
+### Optocouplers — PC817
+
+The PC817 was chosen for the **sense path** (detecting surgeon foot pedal presses) for simplicity and availability. It provides galvanic isolation between the pedal/generator lines and the ESP32 GPIO inputs, which is important in an electrosurgical environment where HF leakage currents are a real concern.
+
+The PC817 is a through-hole DIP-4 package — the one non-SMD active component in the design — chosen because SMD optocouplers in this current transfer ratio range (CTR ~100%) are less common in small quantities and the DIP-4 footprint is straightforward to hand-solder.
+
+Pull-up resistors (10kΩ) on the optocoupler collector outputs connect to **3.3V**, not 5V, to protect IO34 and IO35 which are input-only GPIOs on the ESP32 and cannot tolerate 5V.
+
+### Passive Components — Mixed 0402/0603 SMD
+
+Signal resistors (R1–R6) are **0402** for board density. Pull-down and decoupling passives (R7–R9, C1–C2) are **0603** for easier hand soldering, since they are not in dense areas. All passives are SMD to keep the board flat and assembly consistent.
+
+### Connector Architecture
+
+The PCB uses **screw terminals** (J1, J4) internally — connecting to short wires that run to TE CPC panel-mount sockets on the 3D-printed enclosure walls. This separates the PCB design from the enclosure connector geometry, making it easier to iterate on either independently. The CPC connectors (TE 206430-1) on the enclosure walls provide the locking, keyed, IP-rated interface to the foot pedal and generator cables.
+
+Pin 4 on both J1 and J4 is hardwired to Pin 1 (Common) — matching the internal behavior of the BV-1253B foot pedal, which ties pins 1 and 4 internally. The ASG-300 generator expects pin 4 to track pin 1; floating or independently switching pin 4 causes a generator fault.
+
 ## Notes / assumptions
 
 - This is intended for **research and data collection** with an ASG300 DRE electrosurgical generator. Any use in a live clinical environment requires signal characterization, galvanic isolation, and a safety/regulatory review.
