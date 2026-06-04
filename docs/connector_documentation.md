@@ -1,45 +1,55 @@
-# Electrosurgical Generator & Footswitch Connector Documentation
+# Connector Documentation — ASG300 DRE Foot Pedal PCB
 
-*Generated via API Key LLM Query.*
+This document covers the connectors used on the PCB interposer and its cables.
 
-This document outlines the specific hardware interfaces, connector types, and integration logic for the Bovie Monopolar Footswitch, the DRE ASG-300 Electrosurgical Generator, and how these systems interface with the Da Vinci Surgical Robot arms.
+## System Overview
 
----
+The PCB enclosure sits mid-cable between the ASG300 DRE foot pedal and the generator. Two connectors are needed on the enclosure panel (one facing the foot pedal, one facing the generator). The existing cables each terminate in a mating inline plug.
 
-## 1. Bovie Monopolar Footswitch (e.g., BV-1253B)
+```
+Foot Pedal ──[TE 206429-1 plug]──► [TE 206430-1 socket | PCB | TE 206430-1 socket] ◄──[TE 206429-1 plug]──► ASG300 DRE
+```
 
-Bovie electrosurgical footswitches do not use standard consumer plugs (like USB or 3.5mm jacks) due to the strict safety and isolation requirements of medical equipment.
+## TE Connectivity Part Numbers
 
-*   **Connector Type:** Proprietary medical-grade **multi-pin circular aviation-style connector**. 
-*   **Common Nomenclature:** Often referred to in the industry as a **"Bovie #12 type"** connection. 
-*   **Adapters:** Bovie heavily utilizes adapters to maintain backwards compatibility. The **A1255A Universal Adapter Plug** is frequently used, which features a specific 7.9mm jack size and a 5mm opening to adapt proprietary Bovie ESU footswitch ports to various monopolar pencils and single-pedal switches.
-*   **Operation:** The footswitch acts as a simple dry contact closure. When pressed, it completes a low-voltage circuit that signals the generator to output high-frequency energy.
+### TE 206430-1 — Female Panel Socket (Box/Wall Mount)
 
-## 2. DRE ASG-300 Electrosurgical Generator
+- **Type**: Circular connector, female, panel/chassis mount
+- **Mounting**: Bolts or press-fits into the enclosure wall
+- **Mating plug**: TE 206429-1
+- **Crimp contact loaded**: 66105-4 (socket contact, wire-side)
+- **Quantity on PCB enclosure**: 2 (one per side)
 
-The DRE ASG-300 (also known under the Avante brand) is designed to be highly compatible with standard Bovie accessories.
+### TE 206429-1 — Male Inline Plug (Cable Ends)
 
-*   **Connector Type:** It utilizes the same proprietary circular multi-pin receptacles as standard Bovie units. 
-*   **Compatible Pedals:** It is explicitly compatible with "Bovie-style" accessories, such as the **Bovie Aaron Bipolar Single-Pedal Footswitch (Part #71254)**.
-*   **Pinout:** While exact pinouts are restricted to service manuals to prevent unauthorized modifications, the monopolar connector is typically a 3-pin or 4-pin interface:
-    *   Pin 1: Ground/Common
-    *   Pin 2: "Cut" Signal (Yellow pedal equivalent)
-    *   Pin 3: "Coag" Signal (Blue pedal equivalent)
-    *   *(Pin 4, if present, is often used for shield grounding or pedal detection).*
+- **Type**: Circular connector, male, free-hanging inline plug
+- **Mounting**: Terminates the end of a cable; mates into TE 206430-1
+- **Crimp contact loaded**: 66103-4 (pin contact, wire-side)
+- **Quantity**: 2 (one on foot pedal cable end, one on generator cable end)
 
-## 3. Da Vinci Surgical Robot Integration
+## Crimp Contacts
 
-Interfacing an external generator like the DRE ASG-300 or a standard Bovie to a Da Vinci arm is complex, as the Da Vinci system relies on a highly integrated "Master-Slave" architecture. 
+| Part | Type | Loaded Into |
+|------|------|-------------|
+| 66105-4 | Socket (female contact) | TE 206430-1 (panel socket) |
+| 66103-4 | Pin (male contact) | TE 206429-1 (inline plug) |
 
-### How the Da Vinci Handles Energy:
-1.  **Integrated Generators:** Modern Da Vinci systems (Xi, X, SP) do not usually use standalone third-party generators out of the box. They use **Intuitive E-100 / E-200** generators or the **ERBE VIO dV 2.0**.
-2.  **The Digital Link:** The foot pedals at the surgeon's console are **completely decoupled** from the generator. The surgeon presses the pedal, which sends a digital signal (likely via EtherCAT or CAN bus) to the robot's main computer. The computer then sends a digital "FIRE" command to the integrated ERBE/E-series generator.
-3.  **The Physical Link to the Arm:** 
-    *   The high-voltage energy does **not** travel through the main data cables of the robotic arm (this would risk arcing and destroying the digital encoders).
-    *   Instead, **Proprietary Energy Instrument Cords** plug directly from the front of the ESU (Generator) into specialized, isolated receptacles on the robotic arm carriage.
-    *   These cords mate with the disposable robotic instruments (like Monopolar Curved Scissors or Vessel Sealers) which carry the energy down to the tissue.
+Use the appropriate TE crimp tool for 66-series contacts. Strip wire to the specified length in the contact datasheet and verify crimp pull-force before assembly.
 
-### To link a DRE ASG-300 to a Da Vinci:
-To make a third-party generator work with a Da Vinci system (which was somewhat common on older Si models using Covidien/Valleylab generators):
-*   You must use a **validated Da Vinci ESU Interface Cable**. This cable plugs into the footswitch port on the back of the DRE ASG-300 and routes to the Da Vinci system core. 
-*   This setup tricks the ASG-300 into thinking its physical footswitch is being pressed whenever the Da Vinci computer closes the circuit based on the surgeon pressing the console pedal.
+## Pinout
+
+Document the per-pin signal assignments here as they are finalized during schematic/PCB design. At minimum, record:
+
+| Pin | Signal | Direction (relative to PCB) | Notes |
+|-----|--------|----------------------------|-------|
+| — | CUT | Input (from pedal) / Output (to generator) | Monitored and driven by MCU |
+| — | COAG | Input (from pedal) / Output (to generator) | Monitored and driven by MCU |
+| — | GND | — | Common ground reference |
+| — | (additional) | — | Fill in from schematic |
+
+## Assembly Notes
+
+- Verify connector gender and contact type before crimping — swapping socket/pin contacts is a common assembly error.
+- The panel socket (206430-1) requires a cutout in the enclosure wall; confirm the cutout diameter against the datasheet before machining.
+- After crimping, perform a continuity check through the full cable-to-PCB path before closing the enclosure.
+- The PCB must not alter the electrical characteristics of the CUT/COAG lines when in passive monitoring mode. Verify input impedance and leakage current are within ASG300 DRE specifications.

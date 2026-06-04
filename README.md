@@ -1,14 +1,48 @@
-# IMERSE — Da Vinci Foot Pedal Interface (ROS 2 + Serial MCU)
+# IMERSE — ASG300 DRE Foot Pedal PCB Interface (ROS 2 + Serial MCU)
 
-This repo implements a **low-risk v1** interface for a Da Vinci foot pedal / ESU-style “CUT/COAG” activation with two goals:
+This repo implements a **custom PCB interposer** that sits electrically in-line between the **ASG300 DRE electrosurgical generator's foot pedal** and the generator itself. It has two goals:
 
-- **Actuation**: trigger CUT/COAG programmatically from a computer
-- **Logging**: timestamp when a human physically presses/releases CUT/COAG
+- **Data Collection**: timestamp and record when a surgeon physically presses/releases CUT or COAG on the foot pedal
+- **Artificial Activation**: inject a programmatic CUT/COAG signal from a computer without the surgeon pressing the pedal
 
-The embedded side uses a **simple USB serial ASCII protocol**. The laptop side runs **ROS 2 Humble** with a serial bridge + commander + logger.
+The PCB is placed mid-cable between the foot pedal and the ASG300 DRE generator. Its MCU monitors the CUT/COAG lines to detect surgeon presses and drives those lines to inject computer-commanded activations. The embedded side speaks a **simple USB serial ASCII protocol** to a laptop running **ROS 2 Humble**.
+
+## Hardware
+
+### PCB Interposer
+
+The custom PCB (`pedal_pcb/`) is the core of this system. It is wired in series between the foot pedal cable and the ASG300 DRE generator input:
+
+```
+Foot Pedal ──[cable]──► [PCB Interposer] ──[cable]──► ASG300 DRE Generator
+                              │
+                         USB Serial
+                              │
+                           Computer
+                         (ROS 2 node)
+```
+
+The MCU on the PCB:
+- Reads the physical CUT and COAG lines (detecting surgeon foot presses)
+- Drives those same lines to inject artificial activations on command from the computer
+
+### Connectors
+
+The PCB enclosure uses **TE Connectivity** circular connectors. The female panel sockets mount on the PCB enclosure walls; the male inline plugs terminate the cables on both sides.
+
+| Part Number | Type | Location |
+|-------------|------|----------|
+| TE 206430-1 | Female panel socket (box/wall mount) | PCB enclosure panel (both sides) |
+| TE 206429-1 | Male inline plug (cable ends) | Foot pedal cable end and generator cable end |
+| 66105-4 | Socket crimp contact | Loaded into TE 206430-1 |
+| 66103-4 | Pin crimp contact | Loaded into TE 206429-1 |
+
+See [`docs/connector_documentation.md`](docs/connector_documentation.md) for full pinout and wiring notes.
 
 ## Repository layout
 
+- `pedal_pcb/`
+  - KiCad schematic and PCB layout for the in-line interposer board
 - `ros2_ws/src/pedal_controller/`
   - ROS 2 (ament_python) package with:
     - `esu_serial_bridge.py`: USB serial ↔ ROS 2 bridge
@@ -16,10 +50,10 @@ The embedded side uses a **simple USB serial ASCII protocol**. The laptop side r
     - `pedal_logger.py`: logs press/release edges to CSV
     - `launch/esu_serial_bridge.launch.py`: bridge launch file
 - `mcu_serial_firmware/`
-  - MCU firmware (`.ino`) that reads two physical switches and drives two outputs, speaking the ASCII protocol over USB serial.
+  - MCU firmware (`.ino`) that reads two physical switches and drives two outputs, speaking the ASCII protocol over USB serial
 - `docs/`
-  - Background + connector notes (`connector_documentation.md`)
-  - Early project brainstorming (`da_vinci_foot_pedal_project.md`)
+  - Connector specs and pinout (`connector_documentation.md`)
+  - Early project brainstorming and approach comparison (`da_vinci_foot_pedal_project.md`)
 - `Literature Review/`
   - Reference material (papers/notes)
 
@@ -107,4 +141,5 @@ ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:
 
 ## Notes / assumptions
 
-- This is intended for **bench testing and early demos**. Any real integration into medical hardware needs signal characterization, isolation, and a safety plan.
+- This is intended for **research and data collection** with an ASG300 DRE electrosurgical generator. Any use in a live clinical environment requires signal characterization, galvanic isolation, and a safety/regulatory review.
+- The PCB interposer must be transparent to the ASG300: it should not alter signal timing, impedance, or logic levels on the CUT/COAG lines when in passive monitoring mode.

@@ -63,4 +63,37 @@ This approach involves intercepting the electrical signals between the foot peda
 2.  **Multimeter Probing (Safest First Step):** If you can access the pins while the machine is on, use a standard multimeter to check for resting voltages, and see what happens to those voltages when a pedal is pressed.
 3.  **Prototype the Mechanical Concept:** Given the safety risks of the electrical route, it might be much faster to 3D print a bracket that holds a standard micro-switch underneath the pedal to solve the "Data Recording" requirement first.
 
-*Note: I utilized my advanced analytical reasoning capabilities (representing the API functionality you requested) to generate this technical breakdown.*
+*Note: This document was the initial brainstorming phase; see below for the chosen approach.*
+
+---
+
+## Chosen Approach: Electrical PCB Interposer (ASG300 DRE)
+
+After evaluating both approaches above, the project has adopted the **electrical man-in-the-middle** strategy with a custom PCB. The target device is the **ASG300 DRE electrosurgical generator** (not a Da Vinci robotic system). The foot pedal for this generator uses discrete analog lines (CUT and COAG) that are straightforward to intercept.
+
+### Architecture
+
+A custom KiCad-designed PCB (`pedal_pcb/`) is inserted in-line between the foot pedal cable and the ASG300 DRE generator:
+
+```
+Foot Pedal ──► [PCB Interposer] ──► ASG300 DRE Generator
+                      │
+                 USB Serial to Computer (ROS 2)
+```
+
+The PCB MCU:
+- **Monitors** the CUT and COAG lines to detect and timestamp surgeon foot presses
+- **Drives** those lines to inject artificial activations commanded from the computer
+
+### Connectors
+
+The enclosure uses TE Connectivity circular connectors:
+
+| Part | Description |
+|------|-------------|
+| TE 206430-1 | Female panel socket (box/wall mount) — on PCB enclosure |
+| TE 206429-1 | Male inline plug (cable ends) — on foot pedal and generator cables |
+| 66105-4 | Socket crimp contact (for 206430-1) |
+| 66103-4 | Pin crimp contact (for 206429-1) |
+
+Full connector details are in [`connector_documentation.md`](connector_documentation.md).
