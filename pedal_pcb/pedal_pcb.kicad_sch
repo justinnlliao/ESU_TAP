@@ -4,6 +4,11 @@
 	(generator_version "9.0")
 	(uuid "a95291a4-284f-470e-b313-ae7d3223205c")
 	(paper "A4")
+	(title_block
+		(title "ESU-TAP")
+		(rev "v1.0")
+		(company "Justin Liao")
+	)
 	(lib_symbols
 		(symbol "Connector:Screw_Terminal_01x04"
 			(pin_names
