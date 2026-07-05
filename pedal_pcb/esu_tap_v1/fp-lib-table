@@ -1,0 +1,6 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ESP32-DEVKITC-32E")(type "KiCad")(uri "C:/Users/jalia/Documents/GitHub/ESU-TAP/libraries/esu_tap.pretty/ESP32-DEVKITC-32E.pretty")(options "")(descr ""))
+  (lib (name "ESP32-WROOM-32E")(type "KiCad")(uri "C:/Users/jalia/Documents/GitHub/ESU-TAP/libraries/esu_tap.pretty/ESP32-WROOM-32E.pretty")(options "")(descr ""))
+  (lib (name "TQ2-L2-5V")(type "KiCad")(uri "C:/Users/jalia/Documents/GitHub/ESU-TAP/libraries/esu_tap.pretty/TQ2-L2-5V.pretty")(options "")(descr ""))
+)
