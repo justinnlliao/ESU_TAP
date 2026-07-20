@@ -8,6 +8,25 @@ _autosave-*
 *.kicad_prl
 fp-info-cache
 
+# KiCad fabrication / export outputs (regenerated from board files)
+*-backups/
+gerbers/
+*.zip
+*.drl
+*.gbr
+
+# Filesystem-MCP delete workaround — never commit
+_trash/
+
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db
