@@ -1,96 +1,113 @@
-# Build and run `pedal_controller` on Windows
+# Build and run `pedal_controller` (ESU-TAP)
 
-The ROS 2 package now lives in a standard colcon workspace:
+This is the PC-side ROS 2 package for the ESU-TAP foot pedal interposer.
+It talks to the ESP32, which runs micro-ROS firmware (`microros_firmware/`)
+and connects over a **wired USB serial** link via the micro-ROS agent.
 
-`ros2_ws/src/pedal_controller/`
+Workspace layout:
 
-## 1. Install ROS 2 (required)
+    ros2_ws/src/pedal_controller/
 
-This project targets **ROS 2 Humble** and uses `rclpy` and `std_msgs`.
+## Architecture
 
-- **Official install (long checklist: VS, OpenSSL, Python, etc.):**  
-  [https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html](https://docs.ros.org/en/humble/Installation/Windows-Install-Binary.html)
-- Unpack the Humble **Windows** release zip to a path you will keep, e.g. `C:\dev\ros2_humble`.
-- **Newer LTS (e.g. Jazzy) may work** if you install that distro instead, but the docs and `ros2` path will differ; install one distro and stay consistent with its tutorials.
+    ESP32 (esu_tap_node, micro-ROS)              PC (ROS 2 Humble)
+    ---------------------------------            --------------------------------
+    service server  /esu/cut   (SetBool) <-----  pedal_commander (service client)
+    service server  /esu/coag  (SetBool) <-----
+    publisher /esu/activation_state       ----->  pedal_logger (subscriber)
+       (Int32MultiArray [cut, coag, source])
 
-After install, you must open a shell where the ROS environment is loaded. The installer usually provides **Start Menu** shortcuts such as “ROS 2 Humble” that run the right `local_setup` for you. If you use a normal PowerShell, run the setup script from your install directory first (example for a typical unpack location):
+The micro-ROS **agent** on the PC bridges the ESP32's USB serial to the ROS 2
+graph. It replaces the old custom serial bridge node.
 
-**cmd.exe:**
+## 1. Install ROS 2 Humble
 
-`call C:\dev\ros2_humble\local_setup.bat`
+Target distro is **ROS 2 Humble** (Ubuntu 22.04). On the lab Ubuntu machine it
+is already installed at `/opt/ros/humble`. Source it in every shell:
 
-**PowerShell (if your install has `local_setup.ps1`):**
-
-`C:\dev\ros2_humble\local_setup.ps1`
-
-(Adjust the path to match your actual ROS 2 root.)
+    source /opt/ros/humble/setup.bash
 
 Confirm:
 
-`ros2 --version`
+    ros2 --version
 
-## 2. Colcon and Python tools
+## 2. Install the micro-ROS agent
 
-Use the same terminal where `ros2` already works and install the build tool if needed:
+The agent is what connects the ESP32 to ROS 2. Easiest is the Docker image:
 
-`python -m pip install -U colcon-common-extensions`
+    docker run -it --rm -v /dev:/dev --privileged --net=host \
+      microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
 
-(If the ROS docs pinned a different `python` path, use that interpreter so colcon goes into the right environment.)
+Or build the agent from source (one-time) into a separate workspace:
 
-## 3. PySerial (used by the serial bridge)
+    mkdir -p ~/uros_ws/src && cd ~/uros_ws
+    git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
+    rosdep install --from-paths src --ignore-src -y
+    colcon build
+    source install/local_setup.bash
+    ros2 run micro_ros_setup create_agent_ws.sh
+    ros2 run micro_ros_setup build_agent.sh
+    source install/local_setup.bash
 
-With ROS’s environment still active:
+Then run it with:
 
-`python -m pip install pyserial`
+    ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
 
-## 4. Build this workspace
+Find the ESP32 port with `ls /dev/ttyUSB* /dev/ttyACM*`. If you get a permission
+error, add yourself to the dialout group once: `sudo usermod -aG dialout $USER`
+(then log out and back in).
+
+## 3. Build this workspace
 
 From the `ros2_ws` folder (the parent of `src`):
 
-`colcon build --merge-install --packages-select pedal_controller`
+    rosdep install --from-paths src --ignore-src -r -y
+    colcon build --packages-select pedal_controller
+    source install/local_setup.bash
 
-Then load the overlay in **every** new shell before running nodes (still from the same kind of “ROS” terminal, or after sourcing the ROS install):
+## 4. Run the system
 
-**cmd.exe:**
+Open three terminals (source ROS 2 + this workspace in each).
 
-`call install\local_setup.bat`
+**Terminal 1 - micro-ROS agent** (bridges the ESP32):
 
-**PowerShell:**
+    ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
 
-`.\install\local_setup.ps1`
+**Terminal 2 - logger** (records activations to CSV in `~/pedal_logs/`):
 
-## 5. Run the nodes
+    ros2 run pedal_controller pedal_logger
 
-**Serial bridge (COM port):** The launch file defaults to `COM3` on Windows. Override with an environment variable if needed.
+**Terminal 3 - commander** (sends activation commands):
 
-`set ESU_SERIAL_PORT=COM3`
+    # interactive: ENTER toggles the channel on/off
+    ros2 run pedal_controller pedal_commander
 
-`ros2 launch pedal_controller esu_serial_bridge.launch.py`
+    # single timed pulse on cut for 500 ms:
+    ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=500 -p channel:=cut
 
-**Log only (needs `/esu/activation_state` and optionally `/esu/command`):**
+    # command the coag channel instead:
+    ros2 run pedal_controller pedal_commander --ros-args -p channel:=coag
 
-`ros2 run pedal_controller pedal_logger`
+You can also call the services directly without the commander node:
 
-**Send commands (for testing with the logger):**
+    ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: true}"
+    ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: false}"
 
-`ros2 run pedal_controller pedal_commander`
+And watch the status stream:
 
-For a one-off in **cmd**: `set ESU_SERIAL_PORT=COM4` (then run the launch in the same window).
+    ros2 topic echo /esu/activation_state
 
-## 6. If `python` is wrong on your PC
+## 5. Flashing the ESP32 firmware
 
-The Microsoft Store / alias can steal `python`. On Windows, `py` often works, or use the full path to the Python that ROS 2’s docs installed (Humble’s binary guide used `C:\Python38` in the past). **Use the Python version that matches your ROS 2 install**, not necessarily Python 3.14 from a separate install.
+The firmware lives in `microros_firmware/esu_tap_microros.ino`. Flash it with the
+Arduino IDE using the **micro_ros_arduino** library (Humble branch) installed.
+The board target is your ESP32 dev board (e.g. ESP32-DEVKITC-32E).
 
-## 7. Optional: WSL2 or Linux
+## Notes
 
-Many teams find **Ubuntu + ROS 2** easier than native Windows. The same `ros2_ws` layout is valid there: install ROS 2 on Ubuntu, copy or clone the workspace, then `source /opt/ros/humble/setup.bash`, `colcon build`, `source install/local_setup.bash`, and use `/dev/ttyUSB0` instead of `COM*`.
-
-## What was added in the repo
-
-- `ros2_ws/src/pedal_controller` — the package in the correct colcon `src` layout (moved from the repo root).
-- `ros2_ws/src/pedal_controller/resource/pedal_controller` — ament index marker (required to build).
-- `pedal_controller/__init__.py` — so the module is a proper Python package.
-- `package.xml` — `ament_python` build tool dependency.
-- `ros2_ws/.gitignore` — ignores `build/`, `install/`, `log/`.
-
-You can use `build.ps1` in this folder after ROS 2 is installed and your shell has `ros2` on `PATH`.
+- Requirements met: (1) service servers for cut/coag activation and
+  deactivation, (2) a topic that logs activation/deactivation status.
+- Source attribution (surgeon vs computer) is done on the ESP32 and reported
+  in the third field of `/esu/activation_state`.
+- The workspace targets Ubuntu 22.04. Windows is possible but the agent and
+  serial ports differ; Ubuntu is the supported path.

@@ -3,7 +3,7 @@
 <package format="3">
   <name>pedal_controller</name>
   <version>0.0.0</version>
-  <description>ROS 2 package for actuating and logging Da Vinci foot pedal</description>
+  <description>ROS 2 package for commanding and logging the ESU-TAP foot pedal interposer</description>
   <maintainer email="jalia@todo.todo">jalia</maintainer>
   <license>TODO: License declaration</license>
 
@@ -11,7 +11,7 @@
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
-  <exec_depend>python3-serial</exec_depend>
+  <depend>std_srvs</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
