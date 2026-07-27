@@ -1,6 +1,5 @@
 (fp_lib_table
   (version 7)
   (lib (name "ESP32-DEVKITC-32E")(type "KiCad")(uri "${KIPRJMOD}/libraries/esu_tap_v1.pretty/ESP32-DEVKITC-32E.pretty")(options "")(descr ""))
-  (lib (name "TQ2-L2-5V")(type "KiCad")(uri "${KIPRJMOD}/libraries/esu_tap_v1.pretty/TQ2-L2-5V.pretty")(options "")(descr ""))
   (lib (name "G6K-2F-Y")(type "KiCad")(uri "${KIPRJMOD}/libraries/G6K-2F-Y.pretty")(options "")(descr "Omron G6K-2F-Y SMD DPDT relay"))
 )

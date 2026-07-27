@@ -14,24 +14,25 @@ The mock node impersonates the ESP32 firmware exactly:
 
 Running the **real** `pedal_commander` and **real** `pedal_logger` against the
 mock exercises the entire ROS 2 interface contract end-to-end. What it does NOT
-test is the hardware layer (relay, optocoupler, generator, micro-ROS over real
-serial) — those need the board.
+test is the hardware layer (relays, pedal sensing, generator, micro-ROS over
+real serial) — those need the board.
 
 ## Prerequisites
 
 - ROS 2 Humble (Ubuntu 22.04). See `SETUP.md`.
 - Workspace built:
 
-      cd ros2_ws
-      colcon build --packages-select pedal_controller
-      source install/local_setup.bash
+      source /opt/ros/humble/setup.bash
+      cd ~/ESU_TAP/ros2_ws
+      colcon build
+      source install/setup.bash
 
 ## Run the three-terminal test
 
 Source ROS 2 and the workspace in **each** terminal first:
 
     source /opt/ros/humble/setup.bash
-    source install/local_setup.bash
+    source ~/ESU_TAP/ros2_ws/install/setup.bash
 
 **Terminal 1 — mock ESP32:**
 
@@ -41,16 +42,22 @@ Source ROS 2 and the workspace in **each** terminal first:
 
     ros2 run pedal_controller pedal_logger
 
-**Terminal 3 — real commander** (ENTER toggles the channel on/off):
+**Terminal 3 — real commander** (interactive: c=CUT, g=COAG, x=all off):
 
-    ros2 run pedal_controller pedal_commander --ros-args -p channel:=cut
+    ros2 run pedal_controller pedal_commander
 
 ## What a passing test looks like
 
 - Every ~5 s the logger prints a `[surgeon]` row (from the mock's simulated press)
-- When you press ENTER in the commander, the logger prints a `[computer]` row
+- When you toggle a channel in the commander, the logger prints a `[computer]` row
 - The commander prints the service acknowledgement (`CUT ON -> ok (cut on)`)
 - A CSV file appears in `~/pedal_logs/` with correct `source` values
+
+> NOTE: the mock publishes directly from its service callbacks; the real
+> firmware publishes from its timer. That difference once concealed a real
+> firmware bug (computer activations were never published). A green run here
+> validates the ROS 2 stack — the topic/service contract, commander, logger —
+> NOT the firmware's publish path. Always confirm on hardware too.
 
 ## Quick checks without the commander
 
@@ -76,10 +83,12 @@ Source ROS 2 and the workspace in **each** terminal first:
 
 Replace the mock with the real thing:
 
-1. Flash `microros_firmware/esu_tap_microros.ino` to the ESP32.
+1. Flash `microros_firmware/src/esu_tap_microros.cpp` to the ESP32 with
+   PlatformIO (see `SETUP.md` §5).
 2. Start the micro-ROS agent instead of the mock node:
 
-       ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
+       docker run -it --rm -v /dev:/dev --privileged --net=host \
+         microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
 
 3. Run the **same** `pedal_logger` and `pedal_commander` unchanged. If they
    worked against the mock, the only new variables are hardware.
