@@ -13,10 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='jalia',
-    maintainer_email='jalia@todo.todo',
+    maintainer='Justin',
+    maintainer_email='jalia@jhu.edu',
     description='ROS 2 package for commanding and logging the ESU-TAP foot pedal interposer',
-    license='TODO: License declaration',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
@@ -25,6 +25,12 @@ setup(
             # Test-only: software stand-in for the ESP32, for use before the
             # hardware arrives. Not flight code.
             'mock_esu_node = pedal_controller.mock_esu_node:main',
+            # Interactive full-system acceptance test. Drives the real
+            # services and cross-checks published telemetry + attribution.
+            'system_test = pedal_controller.system_test:main',
+            # Automated latency benchmark: round-trip and command latency
+            # over many iterations, with statistics.
+            'latency_test = pedal_controller.latency_test:main',
         ],
     },
 )

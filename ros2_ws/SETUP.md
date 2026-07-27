@@ -99,9 +99,30 @@ And watch the status stream:
 
 ## 5. Flashing the ESP32 firmware
 
-The firmware lives in `microros_firmware/esu_tap_microros.ino`. Flash it with the
-Arduino IDE using the **micro_ros_arduino** library (Humble branch) installed.
-The board target is your ESP32 dev board (e.g. ESP32-DEVKITC-32E).
+The firmware lives in `microros_firmware/`, built with **PlatformIO** (VS Code
+extension). Open the `microros_firmware/` folder as the PlatformIO project root --
+not the repo root, or PlatformIO will not find `platformio.ini`.
+
+    microros_firmware/
+      platformio.ini
+      src/esu_tap_microros.cpp
+
+Build and upload from the PlatformIO toolbar, or:
+
+    cd ~/ESU_TAP/microros_firmware
+    pio run -t upload
+
+**The first build is slow** (several minutes) -- `micro_ros_platformio` compiles
+the micro-ROS stack from source. Later builds are incremental.
+
+**Library note:** this project uses `micro_ros_platformio`, NOT
+`micro_ros_arduino`. They expose different transport setup calls
+(`set_microros_serial_transports(Serial)` vs `set_microros_transports()`).
+Switching to the Arduino IDE means changing that call and the include.
+
+**Close the PlatformIO Serial Monitor before starting the agent** -- both want
+exclusive access to `/dev/ttyUSB0`, and the agent will sit silent if the monitor
+holds it.
 
 ## Notes
 

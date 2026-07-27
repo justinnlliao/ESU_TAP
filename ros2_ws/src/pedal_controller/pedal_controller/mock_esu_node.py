@@ -25,6 +25,18 @@ Behaviour that matches the firmware:
 This is NOT flight code. It exists only so the real commander and real logger
 can be exercised end-to-end without hardware.
 
+KNOWN LIMITATION -- read before trusting a green test run:
+  This node publishes directly from its service callbacks. The firmware does
+  NOT; it has a single publish path in its timer callback. That difference
+  concealed a critical firmware bug (see docs/ESU_TAP_v2_change_list.md 1.4)
+  in which computer-commanded activations were never published at all, because
+  the sense pins read the pedal contacts and a relay command does not move
+  them. This mock passed cleanly the whole time.
+
+  Treat a passing run here as evidence about the ROS 2 stack only -- the
+  topic/service contract, the commander, and the logger. It says nothing about
+  whether the firmware actually emits the events it should.
+
 Run:
   ros2 run pedal_controller mock_esu_node
   ros2 run pedal_controller mock_esu_node --ros-args -p sim_surgeon:=false

@@ -55,9 +55,56 @@ GND is not connected to /COMMON anywhere
 
 J1/J4 are `TerminalBlock*` in the netlist. Never updated. Replace with TE CPC Series 1 — 206430-1 female panel sockets, 206429-1 male inline plugs, 66105-4 / 66103-4 contacts, 1-206062-4 backshells.
 
-### 1.3 Firmware never updated ✅
+### 1.3 Firmware GPIO map — RESOLVED ✅
 
-`pedal_firmware.ino` still uses generic Arduino pin numbers, not the final GPIO map. Outstanding since v1. See §9.
+Superseded. `microros_firmware/esu_tap_microros.ino` already carries the final map
+(IO26/27 relay drive, IO34/35 sense, IO18/21 LEDs, `pinMode INPUT` only on 34/35).
+The stale `pedal_firmware.ino` reference was to the retired plain-serial firmware.
+Remaining firmware work is §9.
+
+### 1.4 Computer-commanded activations were never published — CRITICAL ✅ FIXED
+
+**Finding.** `CUT_SENSE` / `COAG_SENSE` and `GEN_CUT` / `GEN_COAG` are separate nets
+(✅ confirmed in `esu_tap_v1.kicad_sch`). The ESP32 senses the *pedal* dry contacts;
+the relays close the *generator* contacts. These do not interact.
+
+`publish_state()` was reachable only from `timer_callback`, gated on a change in the
+sensed lines. A relay command does not move the pedal contacts → no sensed edge →
+no publish. Consequences:
+
+- `/esu/activation_state` reported **surgeon presses only**; robot activations were invisible
+- the `source = 1` branch was unreachable dead code
+- every row `pedal_logger` wrote said `surgeon`
+
+For imitation learning this is worse than missing data — it is a systematically
+**wrong** label set, the same failure class as §2.3.
+
+**Why testing missed it.** `mock_esu_node.py` publishes directly from its service
+callbacks; the firmware did not. The mock validated the ROS 2 stack, not the firmware
+publish path, while its docstring claimed it mimicked the firmware exactly.
+
+**Fix (applied to v1 firmware).** Effective state = `sensed OR commanded`. Commanded
+state is tracked in `volatile int cmdCut / cmdCoag`, set by the service callbacks and
+snapshotted once per timer tick. `timer_callback` remains the single publish path.
+
+**Attribution is now deterministic, not timing-based.** A change in the debounced
+*sensed* line is ground truth for a surgeon action and takes precedence; otherwise the
+computer drove it. The 750 ms `CMD_WINDOW_MS` heuristic was removed — it was only ever
+needed because command and sense were being inferred from one signal.
+
+**One message is now published per changed channel**, so each edge carries its own
+source. A single combined message forced one `source` value onto two independent events.
+
+### 1.5 Logger swallowed the first activation ✅ FIXED
+
+`pedal_logger` consumes its first message purely to initialise its edge detector. The
+firmware published nothing at boot, so the first *real* activation of every session was
+absorbed as the baseline and never written to CSV. The mock node had an initial publish;
+the firmware did not. Firmware now publishes a `(0, 0, surgeon)` baseline at the end of
+`setup()`.
+
+⚠️ Both fixes are code-reviewed, not bench-confirmed. Verify against hardware before
+trusting any collected dataset.
 
 ---
 
@@ -243,14 +290,14 @@ IO18 is currently the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are fr
 
 | # | Change |
 |---|---|
-| 9.1 | **Rewrite to the final GPIO map** — outstanding since v1 |
+| 9.1 | ~~Rewrite to the final GPIO map~~ — done in v1 (§1.3). v2 adds IO25/36/22/32/4 and the IO18→IO13 LED move |
 | 9.2 | Sense: `pinMode INPUT` only on IO34/35/36. External pull-ups. Active-low. |
 | 9.3 | Relay drive: active-HIGH on IO26/27/25 |
 | 9.4 | LEDs on IO13/21/22 |
 | 9.5 | **FCFS mutual exclusion** — refuse a command while another channel is sensed or commanded active (§2.3) |
 | 9.6 | Watchdog petting on IO4; define the hang criteria |
 | 9.7 | Enable switch state on IO32, logged |
-| 9.8 | Attribution: pedal-GPIO edge with no matching relay command = surgeon; commanded relay = computer. Extend to 3 channels. |
+| 9.8 | Attribution: extend the deterministic sensed-vs-commanded rule from §1.4 to 3 channels. Effective state = `sensed OR commanded` per channel; publish one message per changed channel. No timing window. |
 
 ## 10. ROS2
 
@@ -258,7 +305,7 @@ IO18 is currently the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are fr
 |---|---|
 | 10.1 | **`pedal_logger.py` schema** — add `bipolar` column; split `event_type` into command vs. activation; add `suppressed` reason code (§2.3) |
 | 10.2 | `pedal_commander.py` — bipolar channel in all three modes |
-| 10.3 | Source inference — 0.75 s window logic extended to 3 channels, FCFS-aware |
+| 10.3 | Source inference — the 0.75 s window is **removed** (§1.4); attribution is deterministic on the ESP32. PC side just records what it receives. Remains FCFS-aware per §2.3. |
 | 10.4 | `esu_serial_bridge.py` — unchanged if WiFi/micro-ROS is the session path |
 
 ---
@@ -296,6 +343,7 @@ IO18 is currently the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are fr
 | 13.5 | G6K or photorelays? | §7 — depends on whether a 2 kV number is a formal requirement or a comfort margin |
 | 13.6 | WDT IC selection | §3.2 |
 | 13.7 | Is USB serial needed during sessions? | §5 — USB isolator or not |
+| 13.8 | Should `mock_esu_node.py` be rebuilt to mirror the firmware's publish path rather than its own? | It hid §1.4. A mock that cannot reproduce a firmware bug is a false negative. |
 
 ---
 

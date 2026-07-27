@@ -110,20 +110,55 @@ class PedalCommander(Node):
 
     # -- Interactive mode --
     def _interactive_loop(self):
-        print('\n=== Pedal Commander (interactive, service client) ===')
-        print(f'  Channel: {self._channel}')
-        print('  ENTER       -> activate   (calls /esu/%s data=true)' % self._channel)
-        print('  ENTER again -> deactivate (calls /esu/%s data=false)' % self._channel)
-        print('  Ctrl+C      -> quit\n')
-        pressed = False
+        # Independent on/off state per channel, so you can hold CUT while
+        # toggling COAG, etc.
+        state = {'cut': False, 'coag': False}
+
+        def show_help():
+            print('\n=== Pedal Commander (interactive, service client) ===')
+            print('  c  ENTER  -> toggle CUT')
+            print('  g  ENTER  -> toggle COAG   (g = coaG, since c is taken)')
+            print('  x  ENTER  -> all OFF (safety)')
+            print('  s  ENTER  -> show current state')
+            print('  h  ENTER  -> help')
+            print('  Ctrl+C    -> quit (deactivates everything)\n')
+            print('  Tip: bare ENTER toggles the default channel '
+                  f'({self._channel}), matching the old behaviour.\n')
+
+        def toggle(channel):
+            new = not state[channel]
+            ok = self._call(channel, new)
+            if ok:
+                state[channel] = new
+
+        def report():
+            c = 'ON' if state['cut'] else 'off'
+            g = 'ON' if state['coag'] else 'off'
+            print(f'   state: CUT={c}  COAG={g}')
+
+        show_help()
         while True:
-            input()
-            if not pressed:
-                self.press()
-                pressed = True
+            raw = input('> ').strip().lower()
+
+            if raw in ('c', 'cut'):
+                toggle('cut')
+            elif raw in ('g', 'coag'):
+                toggle('coag')
+            elif raw in ('x', 'off', 'stop'):
+                # Command both channels off regardless of tracked state.
+                self._call('cut', False)
+                self._call('coag', False)
+                state['cut'] = state['coag'] = False
+            elif raw in ('s', 'state'):
+                report()
+            elif raw in ('h', 'help', '?'):
+                show_help()
+            elif raw == '':
+                # Bare ENTER toggles the default channel -- preserves the
+                # original single-channel muscle memory.
+                toggle(self._channel)
             else:
-                self.release()
-                pressed = False
+                print(f'   unknown: {raw!r}  (h for help)')
 
     # -- Pulse mode --
     def _pulse_once(self):
