@@ -61,41 +61,75 @@ error, add yourself to the dialout group once: `sudo usermod -aG dialout $USER`
 
 From the `ros2_ws` folder (the parent of `src`):
 
-    rosdep install --from-paths src --ignore-src -r -y
-    colcon build --packages-select pedal_controller
-    source install/local_setup.bash
+    source /opt/ros/humble/setup.bash
+    cd ~/ESU_TAP/ros2_ws
+    colcon build
+    source install/setup.bash
 
-## 4. Run the system
+> Build from `~/ESU_TAP/ros2_ws`, NOT from your home directory. Running
+> `colcon build` in `~` dumps `build/ install/ log/` into your home folder
+> (colcon searches recursively and finds the package anyway). If that happens,
+> `rm -rf ~/build ~/install ~/log` and rebuild from the right place.
 
-Open three terminals (source ROS 2 + this workspace in each).
+## 4. Run the system — the exact terminals
 
-**Terminal 1 - micro-ROS agent** (bridges the ESP32):
+The firmware **auto-connects and auto-reconnects**, so you do NOT need to press
+EN, and boot order no longer matters. Start these in any order.
 
-    ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
+In every terminal below, first source both:
 
-**Terminal 2 - logger** (records activations to CSV in `~/pedal_logs/`):
+    source /opt/ros/humble/setup.bash
+    source ~/ESU_TAP/ros2_ws/install/setup.bash
+
+**Terminal 1 — micro-ROS agent** (bridges the ESP32 over USB serial). Docker is
+the supported path on `blue`:
+
+    docker run -it --rm -v /dev:/dev --privileged --net=host \
+      microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
+
+Within a second or two you should see `session established` and entities being
+created, WITHOUT pressing EN. If you restart the agent, the board reconnects on
+its own. (If the port is busy: `sudo fuser -k /dev/ttyUSB0`, then rerun.)
+
+**Terminal 2 — logger** (records activations to CSV in `~/pedal_logs/`):
 
     ros2 run pedal_controller pedal_logger
 
-**Terminal 3 - commander** (sends activation commands):
+**Terminal 3 — commander** (interactive keyboard console):
 
-    # interactive: ENTER toggles the channel on/off
     ros2 run pedal_controller pedal_commander
 
-    # single timed pulse on cut for 500 ms:
-    ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=500 -p channel:=cut
+    #   c  ENTER  -> toggle CUT
+    #   g  ENTER  -> toggle COAG
+    #   x  ENTER  -> all OFF (panic)
+    #   s  ENTER  -> show state
+    #   h  ENTER  -> help
 
-    # command the coag channel instead:
-    ros2 run pedal_controller pedal_commander --ros-args -p channel:=coag
-
-You can also call the services directly without the commander node:
+Or drive the services directly, no commander needed:
 
     ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: true}"
     ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: false}"
-
-And watch the status stream:
-
     ros2 topic echo /esu/activation_state
+
+### Optional test / benchmark nodes (Terminal 3, in place of the commander)
+
+**Interactive full-system acceptance test** — walks CUT/COAG for both computer
+and surgeon paths, cross-checks published telemetry, prints pass/fail:
+
+    ros2 run pedal_controller system_test
+
+**Automated latency benchmark** — toggles a channel N times, reports round-trip
+and command latency stats. Run with the generator RF output OFF:
+
+    ros2 run pedal_controller latency_test
+    ros2 run pedal_controller latency_test --ros-args -p iterations:=200 -p channel:=coag
+
+### Pre-hardware testing (no board)
+
+To exercise the ROS 2 stack without the ESP32, replace Terminal 1's agent with
+the mock node. See `TESTING.md`.
+
+    ros2 run pedal_controller mock_esu_node
 
 ## 5. Flashing the ESP32 firmware
 
@@ -110,10 +144,24 @@ not the repo root, or PlatformIO will not find `platformio.ini`.
 Build and upload from the PlatformIO toolbar, or:
 
     cd ~/ESU_TAP/microros_firmware
-    pio run -t upload
+    pio run -t upload --upload-port /dev/ttyUSB0
+
+> `pio` is the VS Code extension's Core 6.x at `~/.platformio/penv/bin/pio`
+> (on PATH via `.bashrc`). `platformio.ini` names `/dev/esp32-esu`, but that
+> udev symlink is not resolving yet, so pass `--upload-port /dev/ttyUSB0`
+> explicitly for now.
+
+**Stop the agent before flashing** — `sudo fuser -k /dev/ttyUSB0` if you get
+"could not open port" or "multiple access on port". Only one thing (agent,
+flasher, or serial monitor) can own the port at a time; this is the cause of
+nearly every serial error.
+
+**If upload fails with "no serial data received":** hold BOOT, tap EN, release
+EN, keep holding BOOT until "Connecting..." becomes "Chip is ESP32...", release.
 
 **The first build is slow** (several minutes) -- `micro_ros_platformio` compiles
-the micro-ROS stack from source. Later builds are incremental.
+the micro-ROS stack from source. Later builds are incremental. After editing
+`colcon.meta`, force a rebuild of the micro-ROS library: `pio run -t clean_microros`.
 
 **Library note:** this project uses `micro_ros_platformio`, NOT
 `micro_ros_arduino`. They expose different transport setup calls
