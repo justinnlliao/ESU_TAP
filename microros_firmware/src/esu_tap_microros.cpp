@@ -440,14 +440,26 @@ void loop() {
       break;
 
     case AGENT_CONNECTED:
-      // Normal operation. Check the link twice a second; if it drops, go to
-      // DISCONNECTED. Between checks, spin the executor (services + timer).
-      EVERY_MS(500) {
-        agent_state = (rmw_uros_ping_agent(100, 1) == RMW_RET_OK)
-                      ? AGENT_CONNECTED : AGENT_DISCONNECTED;
-      }
-      if (agent_state == AGENT_CONNECTED) {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+      // Normal operation. Spin the executor (services + timer) every loop.
+      // Check the link periodically, but require SEVERAL consecutive missed
+      // pings before declaring a disconnect -- a single missed ping is normal
+      // (the agent can be momentarily busy, or the ping races the executor).
+      // Tearing down on the first miss caused a connect/disconnect loop:
+      // connect -> one ping misses -> destroy -> reconnect, forever.
+      {
+        static int missed_pings = 0;
+        EVERY_MS(500) {
+          if (rmw_uros_ping_agent(200, 1) == RMW_RET_OK) {
+            missed_pings = 0;              // healthy -- reset the counter
+          } else if (++missed_pings >= 3) {
+            agent_state = AGENT_DISCONNECTED;
+          }
+        }
+        if (agent_state == AGENT_CONNECTED) {
+          rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+        } else {
+          missed_pings = 0;               // reset for next connection
+        }
       }
       break;
 

@@ -23,9 +23,17 @@ build/
 install/
 log/
 
+# PlatformIO build artifacts (micro-ROS stack is huge -- never commit)
+.pio/
+
 # Python
 __pycache__/
 *.pyc
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
 
 # OS
 .DS_Store
