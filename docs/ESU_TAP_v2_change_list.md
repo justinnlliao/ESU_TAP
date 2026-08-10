@@ -16,13 +16,13 @@ v1's architecture was rebuilt mid-project because the schematic got ahead of the
 
 | # | Task | Why it blocks |
 |---|---|---|
-| 0.1 | **Bench-test the v1 bypass.** Power board down, plug in, press pedal. | Confirms or kills the §1.1 bug. Changes the bypass topology. |
-| 0.2 | **Buy a BV-1254B bipolar footswitch** (~$230) | Long lead. Blocks all bipolar design. |
-| 0.3 | **Characterize the BV-1254B** — pin count, pinout, R across every pin pair idle/pressed, ID scheme | You cannot design to a datasheet that doesn't exist publicly |
+| 0.1 | ~~Bench-test the v1 bypass~~ ✅ **DONE — CONFIRMED BROKEN on the bench.** Unpowered board leaves the pedal inert; generator does not fire. §1.1 third-pole fix is locked in. | — |
+| 0.2 | ~~Buy a BV-1254B bipolar footswitch~~ ✅ **DONE — in hand** | — |
+| 0.3 | ~~Characterize the BV-1254B~~ ✅ **DONE** — 2 static ID lines + 1 signal contact (see §2.2) | — |
 | 0.4 | **Inspect the generator's bipolar jack** — connector type, is it CPC? | v1 taught you not to assume the connector |
-| 0.5 | **Measure the bipolar jack's idle impedance** to its common | The ~24 Ω finding is what broke v1's topology |
-| 0.6 | **Are the mono and bipolar generator commons the same node internally?** | If shared, saves a bypass pole (§3) |
-| 0.7 | **Scope the mono footswitch line during an activation** | Settles the isolation argument with real numbers |
+| 0.5 | ~~Measure the bipolar jack's idle impedance~~ ⚠️ **ASSUMED = monopolar (~24 Ω).** Not measured — flagged as an assumption, not a fact. Verify at first bipolar bring-up. | — |
+| 0.6 | ~~Mono and bipolar commons the same node?~~ ✅ **RESOLVED** — bipolar common is dedicated/independent. Pole count stays 5 (§3.1). | — |
+| 0.7 | ~~Scope the mono footswitch line~~ ⚠️ **NOT scoped — deferred by choice.** Board runs clean at low process load with no observed issues. Protection parts are precautionary (bad plug-in / fault), so they stay **DNP-with-footprint** per §4. Populate only if a fault ever shows up. | — |
 
 ---
 
@@ -49,7 +49,7 @@ GND is not connected to /COMMON anywhere
 
 **v2 fix:** bypass needs a **third pole** to switch GND ↔ `/COMMON`. See §3.
 
-⚠️ Rests on the G6K pinout (coil 1/8, pole A COM=3 NC=2 NO=4, pole B COM=6 NC=7 NO=5). Netlist is consistent with it. **Confirm on the bench before trusting this.**
+⚠️ Rests on the G6K pinout (coil 1/8, pole A COM=3 NC=2 NO=4, pole B COM=6 NC=7 NO=5). ✅ **Bench-confirmed broken** (0.1) — unpowered board leaves the pedal inert. No longer a prediction.
 
 ### 1.2 Connectors still screw terminals ✅
 
@@ -120,14 +120,20 @@ The BV-1253B behaves differently per generator. On the Specialist PRO it's mono+
 
 ### 2.2 Additions
 
+**BV-1254B in hand and characterized ✅** — the bipolar pedal presents **2 static identity
+lines + 1 signal contact** (simpler than a mono channel, which has 2 switched signals).
+The ID lines are *not switched* — they wire straight through to the generator so it always
+sees a bipolar pedal is present. Only the single signal contact is sensed/forwarded.
+
 | Item | Detail |
 |---|---|
 | Connectors | **2 more CPC** — bipolar pedal socket (J5) + bipolar generator plug (J6). Total 4 + power. |
-| Switching relay | K_BIP — third G6K (U5) |
+| Switching relay | K_BIP — third G6K (U5). **Only 1 pole used** (single signal), vs 2 for a mono channel. |
+| ID lines | **2× static straight-through** pedal→generator. Not relayed, not sensed. ⚠️ must stay connected regardless of board power — route on the always-connected side so an unpowered/hung board doesn't make the generator think the pedal vanished. |
 | Driver | AO3400A + 1 kΩ gate series + 10 kΩ gate pulldown + 1N4148W flyback |
 | Sense | IO36 (VP), external 10 kΩ pull-up, active-low |
 | LED | Blue on IO22 (matches pedal colour convention) |
-| Bypass poles | +2 (BIP + bipolar COM) — see §3 |
+| Bypass poles | +2 (bipolar signal + bipolar COM) — see §3. Common is dedicated, not shared (✅ confirmed with pedal in hand). |
 
 ### 2.3 FCFS corrupts the dataset — highest-value fix in v2 ✅
 
@@ -173,7 +179,26 @@ v2: drive the bypass coil from a watchdog IC output that the ESP32 pets.
 | Powered, firmware healthy | energized | sense-then-forward |
 | **Powered, firmware hung** | **de-energized** | **pedal → generator direct ✅** |
 
-❓ Pick a WDT IC (TPS3823 / MAX6369 class). Pet from IO4.
+**Part LOCKED: TPS3823A-33DBVR** ✅ (SOT-23-5, 3.3 V supervise, push-pull, ~1.6 s timeout).
+Use the **A suffix** — the non-A latches RESET low if WDI keeps toggling during a reset
+event, which is exactly wrong for a failsafe; the A version recovers cleanly. LCSC family
+is C7719 (plain); confirm A-suffix stock when pulling from SnapMagic.
+
+**Polarity (RESET is active-low, push-pull):** drive the bypass-coil MOSFET gate
+*directly* from RESET.
+- healthy → petting IO4 → RESET HIGH → coil-FET on → coils energized → active mode
+- hung → no pet → RESET LOW → coil-FET off → coils drop → **bypass** ✅
+- power off → all low → coils drop → **bypass** ✅
+All three land correct with a direct RESET→gate connection. If you need an inverter, the
+polarity is flipped somewhere — stop and recheck.
+
+⚠️ **Two datasheet gotchas:**
+- A floating WDI makes the chip self-pulse and silently *disable* the watchdog. The IO4
+  pet trace must be solidly connected; add a 1 kΩ WDI→GND so a broken pet line is
+  detectable rather than fail-disabled.
+- **The bypass coils now switch**, so U4/U6/U7 each need a **flyback diode** across the
+  coil (cathode → +5V), same as the switching relays. 3× SOD-123. In v1/early-v2 they
+  were power-tied and didn't need one; they do now.
 
 **Note:** bypass relays must stay electromechanical. Only a mechanical NC contact passes through when unpowered — no SSR can do this.
 
@@ -183,13 +208,28 @@ v2: drive the bypass coil from a watchdog IC output that the ESP32 pets.
 
 The realistic threat is **coupled RF at 490 kHz, ESD, and faults** — not kilovolt dielectric breakdown. The generator's output is already isolated internally: it's **Defibrillator-proof Type CF with isolated output circuitry** ✅, and the footswitch jack sits on the far side of that certified barrier.
 
-| Item | Detail |
-|---|---|
-| **TVS diodes** | Every conductor at J1, J4, J5, J6 |
-| **Series resistors** | ~1 kΩ on IO34 / IO35 / IO36 — limits current into the ESP32's ESD clamps |
-| **RF filtering** | Ferrite bead + shunt cap at each connector. **490 kHz** is the frequency to target ✅ |
-| **Hardware enable switch** | In series with generator-side common. Breaks all channels. Addresses stuck-on contact — the hazard no relay fixes. |
-| Enable switch sense | IO32 (has internal pull-up, unlike 34–39) so firmware can log state |
+**Populate strategy — reserve space, defer the spend (⚠️ these are speculative until §0.7).**
+Every protection part below is defending against a threat that has **not been measured** — the
+footswitch line has not been scoped (blocker 0.7). Rather than build a fortress against ghosts
+or risk a re-spin, **place all protection footprints on the board but mark the speculative ones
+DNP (do-not-populate)** in the BOM. After 0.7:
+- line clean → leave DNP, or fit 0 Ω jumpers where a series element sits
+- line noisy → populate the exact clamp/bead the measurement calls for
+
+Pads cost nothing; the reserved space is what saves the re-spin. The enable switch is **not**
+speculative — it is populated (it addresses stuck-on, a real failure mode).
+
+| Item | Populate | Detail |
+|---|---|---|
+| **TVS — power rails** | **POPULATE** | 3V3 rail + 5 V barrel. Rails are known voltages; protection is cheap insurance. |
+| **TVS — signal lines** | **DNP until 0.7** | senses + GEN lines. Working voltage on GEN side is unknown until scoped. |
+| **Series resistors** | footprint + 0 Ω | ~1 kΩ on IO34 / IO35 / IO36. Fit 0 Ω until a reason to add R appears. |
+| **RF filtering** | **DNP until 0.7** | ferrite + shunt cap at each connector, targeting 490 kHz. Bead value needs the measurement. |
+| **Hardware enable switch** | **POPULATE** | in series with generator-side common. Breaks all channels. Not speculative. |
+| Enable switch sense | POPULATE | IO32 (internal pull-up, unlike 34–39) so firmware can log state |
+
+The one non-negotiable: **do §0.7 before finalizing.** Every "is this overkill?" question
+collapses the moment there's a scope trace. Until then, DNP is the honest default.
 
 ### 4.1 Rejected: AZ733 + 2N7002
 
@@ -278,11 +318,13 @@ Both fail a datasheet check. Recorded so this isn't relitigated.
 
 Avoid IO0/2/5/12/15 (strapping), IO1/3 (UART0).
 
-### 8.1 SD card decision ❓
+### 8.1 SD card decision — RESOLVED: keep the capability ✅
 
-IO18 is currently the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are free ✅, IO18 is not.
-
-**Recommendation: move the CUT LED to IO13 regardless.** Costs nothing now, preserves the SD option, painful to change after layout.
+IO18 is the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are free, IO18 is not.
+**Decision: reserve SD.** Move the CUT LED off IO18 (→ IO13) so the full VSPI bus stays
+available. Not adding the SD socket now, but the pins are kept clear so it's a drop-in
+later with no re-layout. ⚠️ In the current v2 netlist the CUT LED is still on IO18 —
+**this move is outstanding.**
 
 ---
 
@@ -339,11 +381,48 @@ IO18 is currently the CUT LED (R8). VSPI wants IO18/19/23/5 — IO19/23/5 are fr
 | 13.1 | Is the v1 bypass bug confirmed on the bench? | §3 topology |
 | 13.2 | Mono and bipolar generator commons — same node? | §3.1 pole count |
 | 13.3 | Is the bipolar jack a CPC? | §2.2 BOM |
-| 13.4 | SD logging in scope? | §8.1 (mitigated — move the LED anyway) |
+| 13.4 | ~~SD logging in scope?~~ ✅ **RESOLVED — reserve capability.** Keep VSPI clear (move CUT LED IO18→IO13); no socket now. | §8.1 |
 | 13.5 | G6K or photorelays? | §7 — depends on whether a 2 kV number is a formal requirement or a comfort margin |
-| 13.6 | WDT IC selection | §3.2 |
+| 13.6 | ~~WDT IC selection~~ ✅ **RESOLVED — TPS3823A-33DBVR**, direct RESET→coil-FET gate, +1 kΩ WDI→GND, +3× coil flybacks (§3.2) | — |
 | 13.7 | Is USB serial needed during sessions? | §5 — USB isolator or not |
 | 13.8 | Should `mock_esu_node.py` be rebuilt to mirror the firmware's publish path rather than its own? | It hid §1.4. A mock that cannot reproduce a firmware bug is a false negative. |
+
+---
+
+## 14. Parts & libraries
+
+Library target: append everything to `esu_tap_pcb/esu_tap_v2/libraries/` so the project's
+`${KIPRJMOD}`-relative sym/fp-lib-tables pick it up with no path edits. Download tool is
+**SnapMagic Search** (formerly SnapEDA) — easyeda2kicad is not working on this machine.
+
+### Confirmed — download now
+
+| Ref | Part | Pkg | LCSC | Source | Populate |
+|---|---|---|---|---|---|
+| Q1–Q3 driver | AO3400A | SOT-23 | C20917 | snapeda.com/parts/AO3400A/Alpha | POPULATE |
+| TVS 3V3 rail | SMAJ5.0A (uni) | SMA/DO-214AC | — | snapeda.com/parts/SMAJ5.0A/Littelfuse | POPULATE |
+| TVS 5 V barrel | SMAJ6.0A (uni) | SMA | — | snapeda.com/parts/SMAJ6.0A/Littelfuse | POPULATE |
+| TVS sense lines | PESD5V0S1BA (bidi) | SOD-323 | — | snapeda.com/parts/PESD5V0S1BA/DG,115/NXP | **DNP until §0.7** |
+| Barrel jack | CUI PJ-102AH (5.5×2.1 mm) | THT horiz | — | fp is **built-in**: `Connector_BarrelJack:BarrelJack_CUI_PJ-102AH_Horizontal`; symbol `Connector:Barrel_Jack` or snapeda.com/parts/PJ-102AH/CUI%20Devices | POPULATE |
+
+A/CA suffix: `A` = unidirectional (rails), `CA`/bidi = signal lines that ring both ways.
+Barrel jack is through-hole (conventional — takes plug/unplug force); it's a hand-solder /
+non-PCBA line item, which is expected.
+
+### Already in the v1 library — no download
+
+- **G6K-2F-Y-5V** relay (C2982926) — place a 3rd switching instance + the bypass bank
+- **1N4148W** flyback (C81598), **1 kΩ** (C11702), 10 kΩ, decoupling caps — v1 lib or KiCad `Device`
+
+### Not yet chosen — real design decisions, do NOT blind-download
+
+| Part | Blocked on |
+|---|---|
+| Watchdog IC (TPS3823 / MAX6369 class) | timeout + output polarity (§13.6) — must be "asserted only while petted" |
+| ORing schottky (SS34 / B5819W class) | trivial at these loads; pick one, then pull |
+| Ferrite bead | impedance at 490 kHz — needs the §0.7 measurement |
+| TVS on GEN lines | working voltage unknown until §0.7 scoped |
+| CPC connectors (TE Series 1) | not on LCSC; pull TE's own KiCad lib. **First settle** whether the PCB land is a CPC footprint at all or just a header the CPC's wires crimp into (§0.4) |
 
 ---
 

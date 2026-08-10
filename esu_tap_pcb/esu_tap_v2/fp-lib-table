@@ -1,0 +1,10 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ESP32-DEVKITC-32E")(type "KiCad")(uri "${KIPRJMOD}/libraries/esu_tap_v1.pretty/ESP32-DEVKITC-32E.pretty")(options "")(descr ""))
+  (lib (name "G6K-2F-Y")(type "KiCad")(uri "${KIPRJMOD}/libraries/G6K-2F-Y.pretty")(options "")(descr "Omron G6K-2F-Y SMD DPDT relay"))
+  (lib (name "AO3400A")(type "KiCad")(uri "${KIPRJMOD}/libraries/AO3400A.pretty")(options "")(descr "Alpha & Omega AO3400A SOT-23 MOSFET"))
+  (lib (name "SMAJ5.0A")(type "KiCad")(uri "${KIPRJMOD}/libraries/SMAJ5.0A.pretty")(options "")(descr "Littelfuse SMAJ5.0A TVS diode, DO-214AC"))
+  (lib (name "SMAJ6.0A")(type "KiCad")(uri "${KIPRJMOD}/libraries/SMAJ6.0A.pretty")(options "")(descr "Littelfuse SMAJ6.0A TVS diode, DO-214AC"))
+  (lib (name "PESD5V0S1BA_DG_115")(type "KiCad")(uri "${KIPRJMOD}/libraries/PESD5V0S1BA_DG_115.pretty")(options "")(descr "Nexperia PESD5V0S1BA bidirectional ESD diode, SOD-323"))
+  (lib (name "TPS3823-33DBVR")(type "KiCad")(uri "${KIPRJMOD}/libraries/TPS3823-33DBVR.pretty")(options "")(descr "Texas Instruments TPS3823-33DBVR watchdog voltage supervisor, SOT-23-5"))
+)
