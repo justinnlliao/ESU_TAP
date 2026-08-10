@@ -3286,6 +3286,198 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Power_Supervisor:TPS3808DBV"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 8.89 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "TPS3808DBV"
+				(at 0 6.35 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6"
+				(at -2.54 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "http://www.ti.com/lit/ds/symlink/tps3808.pdf"
+				(at -2.54 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Low-Quiescent-Current, Programmable-Delay Supervisory Circuit, SOT-23-6"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "supply voltage supervisor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "SOT?23*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TPS3808DBV_0_1"
+				(rectangle
+					(start -7.62 5.08)
+					(end 7.62 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "TPS3808DBV_1_1"
+				(pin input line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "SENSE"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 0 0)
+					(length 2.54)
+					(name "~{MR}"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "CT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 7.62 270)
+					(length 2.54)
+					(name "VDD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 10.16 0 180)
+					(length 2.54)
+					(name "~{RESET}"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "SMAJ6.0A:SMAJ6.0A"
 			(pin_names
 				(offset 1.016)
@@ -4127,6 +4319,12 @@
 		(uuid "06114bbe-bf61-48e9-9ad6-f6b11ca7849c")
 	)
 	(junction
+		(at 69.85 137.16)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "0dd22e74-0b5a-43d0-b5d7-e62d31a2c1ad")
+	)
+	(junction
 		(at 205.74 58.42)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4187,10 +4385,22 @@
 		(uuid "675c907d-d1f2-4fa7-bdb0-41e2ee553bdf")
 	)
 	(junction
+		(at 149.86 119.38)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "73f64654-6135-4074-a31f-e112cd799d06")
+	)
+	(junction
 		(at 149.86 158.75)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "7f13a208-a380-47d2-b5fe-ed7847ba6da4")
+	)
+	(junction
+		(at 109.22 137.16)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8c11d39f-3871-4c68-bc95-495227d8d7ea")
 	)
 	(junction
 		(at 205.74 144.78)
@@ -4215,6 +4425,24 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ac3af37c-6bba-4c25-a771-aa6f1c169d5f")
+	)
+	(junction
+		(at 149.86 137.16)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c0c74ea1-f950-49a8-9c32-e444c2b16b27")
+	)
+	(junction
+		(at 69.85 119.38)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c2468679-3e64-47b0-bfae-86fd00e43807")
+	)
+	(junction
+		(at 109.22 119.38)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c38136e4-c56b-4a97-9945-07abd3c44c8b")
 	)
 	(junction
 		(at 214.63 109.22)
@@ -4313,6 +4541,10 @@
 		(uuid "5c37d223-3206-49cd-b86b-7862b08ba88c")
 	)
 	(no_connect
+		(at 105.41 57.15)
+		(uuid "5d82ad39-4b9a-4058-9ad0-b4a89edaf6c2")
+	)
+	(no_connect
 		(at 105.41 85.09)
 		(uuid "5f34b4f3-0038-43ba-b624-8415da7ede04")
 	)
@@ -4323,10 +4555,6 @@
 	(no_connect
 		(at 146.05 69.85)
 		(uuid "6ff2c90a-a26a-44e8-ba75-a6ba3bc06cf4")
-	)
-	(no_connect
-		(at 105.41 59.69)
-		(uuid "7f0f8cec-ed57-45a0-a53f-dbdeb0d4140e")
 	)
 	(no_connect
 		(at 229.87 49.53)
@@ -4417,10 +4645,6 @@
 		(uuid "f17851c1-1982-4d2c-b9f4-6d8a1e3f319b")
 	)
 	(no_connect
-		(at 105.41 67.31)
-		(uuid "f6e32b3f-ae4a-4634-87a0-d47044e52a4e")
-	)
-	(no_connect
 		(at 146.05 44.45)
 		(uuid "f958d08c-81e7-4a60-b5cd-edb250acf665")
 	)
@@ -4490,6 +4714,16 @@
 	)
 	(wire
 		(pts
+			(xy 100.33 59.69) (xy 105.41 59.69)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0e1c618e-158b-4828-a7fd-d3d3ae2f42ec")
+	)
+	(wire
+		(pts
 			(xy 138.43 182.88) (xy 135.89 182.88)
 		)
 		(stroke
@@ -4530,7 +4764,7 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 118.11) (xy 149.86 120.65)
+			(xy 149.86 118.11) (xy 149.86 119.38)
 		)
 		(stroke
 			(width 0)
@@ -4557,6 +4791,36 @@
 			(type default)
 		)
 		(uuid "1f3381e0-587b-4f9a-80cb-1cfc61a5384a")
+	)
+	(wire
+		(pts
+			(xy 69.85 137.16) (xy 69.85 138.43)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "21370418-a617-4c62-be25-77aec60678a9")
+	)
+	(wire
+		(pts
+			(xy 69.85 119.38) (xy 69.85 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "225199c8-4346-4174-b3c4-a0d02bd9e34d")
+	)
+	(wire
+		(pts
+			(xy 144.78 124.46) (xy 144.78 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "23740525-d0c6-4de4-9e8d-8a5340de12a2")
 	)
 	(wire
 		(pts
@@ -4600,6 +4864,16 @@
 	)
 	(wire
 		(pts
+			(xy 64.77 124.46) (xy 64.77 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "29ce5252-065a-4ac4-b2a0-04a6985ee920")
+	)
+	(wire
+		(pts
 			(xy 214.63 132.08) (xy 214.63 135.89)
 		)
 		(stroke
@@ -4630,6 +4904,26 @@
 	)
 	(wire
 		(pts
+			(xy 104.14 132.08) (xy 104.14 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2f563caa-61b2-4ae6-b095-f834cb83b549")
+	)
+	(wire
+		(pts
+			(xy 144.78 137.16) (xy 149.86 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "323c24f5-93e8-45ce-a72d-1308ddad519c")
+	)
+	(wire
+		(pts
 			(xy 214.63 109.22) (xy 214.63 110.49)
 		)
 		(stroke
@@ -4650,6 +4944,16 @@
 	)
 	(wire
 		(pts
+			(xy 69.85 44.45) (xy 71.12 44.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "45664794-bebd-4e3b-bdbe-60e392897f07")
+	)
+	(wire
+		(pts
 			(xy 191.77 144.78) (xy 193.04 144.78)
 		)
 		(stroke
@@ -4657,6 +4961,16 @@
 			(type default)
 		)
 		(uuid "47d5a09e-4def-47cb-87c5-964ec366dfa6")
+	)
+	(wire
+		(pts
+			(xy 64.77 132.08) (xy 64.77 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "494ac439-d1da-4ba3-8049-73165d7aa230")
 	)
 	(wire
 		(pts
@@ -4790,13 +5104,33 @@
 	)
 	(wire
 		(pts
-			(xy 69.85 118.11) (xy 69.85 120.65)
+			(xy 46.99 34.29) (xy 46.99 36.83)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "62ea73ef-ca76-42fb-b747-bd17ee4a0791")
+	)
+	(wire
+		(pts
+			(xy 69.85 118.11) (xy 69.85 119.38)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "65457d29-9022-47c2-95fe-817f9ff41509")
+	)
+	(wire
+		(pts
+			(xy 149.86 137.16) (xy 149.86 138.43)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "67bc0cb3-2f8e-45b1-a670-c81d7b4aa6af")
 	)
 	(wire
 		(pts
@@ -4920,6 +5254,16 @@
 	)
 	(wire
 		(pts
+			(xy 104.14 119.38) (xy 109.22 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "83e9dd1d-02db-4595-a874-73bf92598193")
+	)
+	(wire
+		(pts
 			(xy 149.86 161.29) (xy 149.86 163.83)
 		)
 		(stroke
@@ -4960,6 +5304,16 @@
 	)
 	(wire
 		(pts
+			(xy 144.78 119.38) (xy 149.86 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8b52feff-29ea-4be9-b1cc-d50db1637f04")
+	)
+	(wire
+		(pts
 			(xy 149.86 161.29) (xy 152.4 161.29)
 		)
 		(stroke
@@ -4980,13 +5334,23 @@
 	)
 	(wire
 		(pts
-			(xy 69.85 135.89) (xy 69.85 138.43)
+			(xy 69.85 135.89) (xy 69.85 137.16)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "91f51f0c-51c7-44e8-8b4b-2808095ffba9")
+	)
+	(wire
+		(pts
+			(xy 64.77 119.38) (xy 69.85 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "934f0e60-20b0-4eee-899a-6b54b8f0fdcc")
 	)
 	(wire
 		(pts
@@ -5050,6 +5414,16 @@
 	)
 	(wire
 		(pts
+			(xy 64.77 137.16) (xy 69.85 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a38281c6-5e80-4efc-bedb-94acdb49d1a5")
+	)
+	(wire
+		(pts
 			(xy 214.63 88.9) (xy 214.63 92.71)
 		)
 		(stroke
@@ -5080,6 +5454,16 @@
 	)
 	(wire
 		(pts
+			(xy 144.78 132.08) (xy 144.78 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a705105a-6f93-42fa-9e4d-5b77833b6dbb")
+	)
+	(wire
+		(pts
 			(xy 74.93 116.84) (xy 74.93 120.65)
 		)
 		(stroke
@@ -5087,6 +5471,16 @@
 			(type default)
 		)
 		(uuid "ac188e6c-84c1-41a0-956b-a280372afb36")
+	)
+	(wire
+		(pts
+			(xy 104.14 124.46) (xy 104.14 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ad70cf16-d877-475f-9296-59e19f330966")
 	)
 	(wire
 		(pts
@@ -5140,23 +5534,13 @@
 	)
 	(wire
 		(pts
-			(xy 100.33 57.15) (xy 105.41 57.15)
+			(xy 100.33 67.31) (xy 105.41 67.31)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "b5dea6f2-4c03-487b-bb3e-99d27463ae8b")
-	)
-	(wire
-		(pts
-			(xy 109.22 135.89) (xy 109.22 138.43)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b9eef944-e0f2-46c6-aaf7-191579a11ea5")
 	)
 	(wire
 		(pts
@@ -5207,6 +5591,16 @@
 			(type default)
 		)
 		(uuid "c6596af1-f601-40f6-8708-e1dcf75f01fe")
+	)
+	(wire
+		(pts
+			(xy 109.22 137.16) (xy 109.22 138.43)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c80d51f9-9fbc-46c3-9183-628a435d3c35")
 	)
 	(wire
 		(pts
@@ -5300,6 +5694,16 @@
 	)
 	(wire
 		(pts
+			(xy 149.86 119.38) (xy 149.86 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d99aa472-63a3-4478-b39e-84bab5c39cce")
+	)
+	(wire
+		(pts
 			(xy 135.89 163.83) (xy 138.43 163.83)
 		)
 		(stroke
@@ -5317,6 +5721,26 @@
 			(type default)
 		)
 		(uuid "dbb74230-2e5c-41d9-a9c1-43e91b6625a2")
+	)
+	(wire
+		(pts
+			(xy 104.14 137.16) (xy 109.22 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dc1c64a9-b53b-4063-b7c7-90f2e959caed")
+	)
+	(wire
+		(pts
+			(xy 57.15 44.45) (xy 59.69 44.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e0f4b8ea-03d0-44e9-9e26-180afe0a05df")
 	)
 	(wire
 		(pts
@@ -5367,6 +5791,16 @@
 			(type default)
 		)
 		(uuid "e4a7176f-0c9e-4ee3-829b-6b074d46254f")
+	)
+	(wire
+		(pts
+			(xy 109.22 135.89) (xy 109.22 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e55dfe36-e2da-4ec9-86b2-7ac519162023")
 	)
 	(wire
 		(pts
@@ -5430,6 +5864,16 @@
 	)
 	(wire
 		(pts
+			(xy 109.22 119.38) (xy 109.22 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f0bc4273-ace2-4c71-a59a-f3fd9d400a73")
+	)
+	(wire
+		(pts
 			(xy 100.33 49.53) (xy 105.41 49.53)
 		)
 		(stroke
@@ -5440,7 +5884,7 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 135.89) (xy 149.86 138.43)
+			(xy 149.86 135.89) (xy 149.86 137.16)
 		)
 		(stroke
 			(width 0)
@@ -5470,7 +5914,7 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 118.11) (xy 109.22 120.65)
+			(xy 109.22 118.11) (xy 109.22 119.38)
 		)
 		(stroke
 			(width 0)
@@ -5629,7 +6073,7 @@
 		(uuid "5ca8b0d2-3552-4f83-bddf-658c180b900c")
 	)
 	(label "BI_POWER"
-		(at 100.33 57.15 180)
+		(at 100.33 67.31 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -5697,6 +6141,16 @@
 			(justify right bottom)
 		)
 		(uuid "978ecec3-f35f-45f5-872b-46495ce943bf")
+	)
+	(label "WATCHDOG"
+		(at 100.33 59.69 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "9d8d0125-010a-4502-9257-42bfedf4027c")
 	)
 	(label "BI_COMMON"
 		(at 81.28 186.69 0)
@@ -5912,6 +6366,103 @@
 			(project "pedal_pcb"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Diode:1N4148W")
+		(at 144.78 128.27 90)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "0639c146-a114-4c31-947c-d58231fe6834")
+		(property "Reference" "D11"
+			(at 142.24 126.9999 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1N4148W"
+			(at 142.24 129.5399 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SOD-123"
+			(at 149.225 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.vishay.com/docs/85748/1n4148w.pdf"
+			(at 144.78 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "75V 0.15A Fast Switching Diode, SOD-123"
+			(at 144.78 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 144.78 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 144.78 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C81598"
+			(at 144.78 128.27 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "b8dea8bc-73e7-4257-a097-a7e4eee42b09")
+		)
+		(pin "2"
+			(uuid "f0c964d0-6d1f-4a86-9408-6c1afba0e890")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "D11")
 					(unit 1)
 				)
 			)
@@ -7259,6 +7810,72 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3V3")
+		(at 46.99 34.29 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "3cc5b63c-ada0-40c6-9eeb-42c969600278")
+		(property "Reference" "#PWR033"
+			(at 46.99 38.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 46.99 29.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 46.99 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 46.99 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 46.99 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "770e3641-bb7a-4741-9107-90ba445f1116")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR033")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 138.43 163.83 90)
 		(unit 1)
@@ -8081,6 +8698,103 @@
 		)
 	)
 	(symbol
+		(lib_id "Diode:1N4148W")
+		(at 64.77 128.27 90)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "67e1a1a5-0e11-43aa-9fbb-6648911a270b")
+		(property "Reference" "D9"
+			(at 62.23 126.9999 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1N4148W"
+			(at 62.23 129.5399 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SOD-123"
+			(at 69.215 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.vishay.com/docs/85748/1n4148w.pdf"
+			(at 64.77 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "75V 0.15A Fast Switching Diode, SOD-123"
+			(at 64.77 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 64.77 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 64.77 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C81598"
+			(at 64.77 128.27 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "59e385fc-2e13-469e-b3c9-b75838ed7b81")
+		)
+		(pin "2"
+			(uuid "4587acb3-3ef5-4267-9068-f5c04cf2bd52")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "D9")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3V3")
 		(at 92.71 166.37 180)
 		(unit 1)
@@ -8799,6 +9513,198 @@
 		)
 	)
 	(symbol
+		(lib_id "AO3400A:AO3400A")
+		(at 64.77 46.99 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7bcd8f96-bca4-47bb-933d-0f03c94bcd8c")
+		(property "Reference" "Q4"
+			(at 64.77 38.1 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "AO3400A"
+			(at 64.77 40.64 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "AO3400A:SOT95P280X125-3N"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MF" "Alpha & Omega Semiconductor"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "MAXIMUM_PACKAGE_HEIGHT" "1.25 mm"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Package" "SOT-23 Alpha &amp; Omega Semiconductor Inc."
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Price" "None"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Check_prices" "https://www.snapeda.com/parts/AO3400A/Alpha/view-part/?ref=eda"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "STANDARD" "IPC 7351B"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "PARTREV" "L"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "SnapEDA_Link" "https://www.snapeda.com/parts/AO3400A/Alpha/view-part/?ref=snap"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "MP" "AO3400A"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Description_1" "N-Channel 30 V 5.7A (Ta) 1.4W (Ta) Surface Mount SOT-23-3"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "Availability" "In Stock"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(property "MANUFACTURER" "Alpha & Omega Semiconductor"
+			(at 64.77 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "b0f797cd-9dc0-4864-a066-e7a7bba92af3")
+		)
+		(pin "2"
+			(uuid "ceeb8d85-d26d-4c7a-8277-43567575f365")
+		)
+		(pin "3"
+			(uuid "fd00b76e-2f28-48ce-8edd-48290c7b821e")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "Q4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+5V")
 		(at 224.79 31.75 0)
 		(mirror y)
@@ -8937,6 +9843,85 @@
 			(project ""
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Power_Supervisor:TPS3808DBV")
+		(at 46.99 44.45 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "80037af0-dc73-45fd-9c2f-d59fbd3d4e61")
+		(property "Reference" "U8"
+			(at 53.34 35.814 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "TPS3808DBV"
+			(at 53.594 38.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6"
+			(at 44.45 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/tps3808.pdf"
+			(at 44.45 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Low-Quiescent-Current, Programmable-Delay Supervisory Circuit, SOT-23-6"
+			(at 46.99 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "5"
+			(uuid "e8b6f04d-6a45-43d2-884c-eaee697eee3f")
+		)
+		(pin "6"
+			(uuid "9bf6cda2-cb90-4cb9-ab8a-ee0da9b6bbb0")
+		)
+		(pin "1"
+			(uuid "83880e05-ad48-4c57-bcac-d8bed9f87b63")
+		)
+		(pin "3"
+			(uuid "b6dc7852-09dc-4752-96ed-2d0c8ddf21d4")
+		)
+		(pin "4"
+			(uuid "37465403-9b74-4c26-a98f-448244653eea")
+		)
+		(pin "2"
+			(uuid "a9664028-ebb6-4e82-a656-96d18ddb4e54")
+		)
+		(instances
+			(project ""
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "U8")
 					(unit 1)
 				)
 			)
@@ -9222,6 +10207,71 @@
 			(project ""
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "#PWR01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 46.99 52.07 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "8645a8f7-c813-4907-bc21-86aa2c835616")
+		(property "Reference" "#PWR034"
+			(at 46.99 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 49.022 55.88 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 46.99 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 46.99 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 46.99 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "0f8258d9-dfbf-481b-bb76-bd465d695fe4")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR034")
 					(unit 1)
 				)
 			)
@@ -10704,6 +11754,71 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 71.12 44.45 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b3a3c711-0387-4db6-8dcf-d00ca680eef0")
+		(property "Reference" "#PWR035"
+			(at 77.47 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 74.93 42.418 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 71.12 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 71.12 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "46ac9fa6-96ff-48bb-8af6-d253f1a901fa")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR035")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector:Screw_Terminal_01x04")
 		(at 130.81 182.88 0)
 		(mirror y)
@@ -12080,6 +13195,103 @@
 			(project "esu_tap_v1"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "#PWR015")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Diode:1N4148W")
+		(at 104.14 128.27 90)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f10942f6-3263-4d7f-9b8a-1b72f884dac1")
+		(property "Reference" "D10"
+			(at 101.6 126.9999 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1N4148W"
+			(at 101.6 129.5399 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SOD-123"
+			(at 108.585 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.vishay.com/docs/85748/1n4148w.pdf"
+			(at 104.14 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "75V 0.15A Fast Switching Diode, SOD-123"
+			(at 104.14 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 104.14 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 104.14 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C81598"
+			(at 104.14 128.27 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "0d60199a-a574-442b-a35d-af407565c69f")
+		)
+		(pin "2"
+			(uuid "08c504ac-3708-4b4d-baf9-9a09697f357b")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "D10")
 					(unit 1)
 				)
 			)
