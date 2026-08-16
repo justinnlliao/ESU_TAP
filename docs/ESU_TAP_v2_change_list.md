@@ -57,7 +57,7 @@ J1/J4 are `TerminalBlock*` in the netlist. Never updated. Replace with TE CPC Se
 
 ### 1.3 Firmware GPIO map — RESOLVED ✅
 
-Superseded. `microros_firmware/esu_tap_microros.ino` already carries the final map
+Superseded. `firmware/esp32/src/esu_tap_microros.cpp` already carries the final map
 (IO26/27 relay drive, IO34/35 sense, IO18/21 LEDs, `pinMode INPUT` only on 34/35).
 The stale `pedal_firmware.ino` reference was to the retired plain-serial firmware.
 Remaining firmware work is §9.
@@ -391,7 +391,7 @@ later with no re-layout. ⚠️ In the current v2 netlist the CUT LED is still o
 
 ## 14. Parts & libraries
 
-Library target: append everything to `esu_tap_pcb/esu_tap_v2/libraries/` so the project's
+Library target: append everything to `hardware/esu-tap-v2/libraries/` so the project's
 `${KIPRJMOD}`-relative sym/fp-lib-tables pick it up with no path edits. Download tool is
 **SnapMagic Search** (formerly SnapEDA) — easyeda2kicad is not working on this machine.
 

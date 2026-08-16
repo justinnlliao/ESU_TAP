@@ -1,12 +1,12 @@
 # Build and run `pedal_controller` (ESU-TAP)
 
 This is the PC-side ROS 2 package for the ESU-TAP foot pedal interposer.
-It talks to the ESP32, which runs micro-ROS firmware (`microros_firmware/`)
+It talks to the ESP32, which runs micro-ROS firmware (`firmware/esp32/`)
 and connects over a **wired USB serial** link via the micro-ROS agent.
 
 Workspace layout:
 
-    ros2_ws/src/pedal_controller/
+    software/ros2/src/pedal_controller/
 
 ## Architecture
 
@@ -59,14 +59,14 @@ error, add yourself to the dialout group once: `sudo usermod -aG dialout $USER`
 
 ## 3. Build this workspace
 
-From the `ros2_ws` folder (the parent of `src`):
+From the `software/ros2` folder (the parent of `src`):
 
     source /opt/ros/humble/setup.bash
-    cd ~/ESU_TAP/ros2_ws
+    cd ~/ESU_TAP/software/ros2
     colcon build
     source install/setup.bash
 
-> Build from `~/ESU_TAP/ros2_ws`, NOT from your home directory. Running
+> Build from `~/ESU_TAP/software/ros2`, NOT from your home directory. Running
 > `colcon build` in `~` dumps `build/ install/ log/` into your home folder
 > (colcon searches recursively and finds the package anyway). If that happens,
 > `rm -rf ~/build ~/install ~/log` and rebuild from the right place.
@@ -79,7 +79,7 @@ EN, and boot order no longer matters. Start these in any order.
 In every terminal below, first source both:
 
     source /opt/ros/humble/setup.bash
-    source ~/ESU_TAP/ros2_ws/install/setup.bash
+    source ~/ESU_TAP/software/ros2/install/setup.bash
 
 **Terminal 1 — micro-ROS agent** (bridges the ESP32 over USB serial). Docker is
 the supported path on `blue`:
@@ -133,17 +133,17 @@ the mock node. See `TESTING.md`.
 
 ## 5. Flashing the ESP32 firmware
 
-The firmware lives in `microros_firmware/`, built with **PlatformIO** (VS Code
-extension). Open the `microros_firmware/` folder as the PlatformIO project root --
+The firmware lives in `firmware/esp32/`, built with **PlatformIO** (VS Code
+extension). Open the `firmware/esp32/` folder as the PlatformIO project root --
 not the repo root, or PlatformIO will not find `platformio.ini`.
 
-    microros_firmware/
+    firmware/esp32/
       platformio.ini
       src/esu_tap_microros.cpp
 
 Build and upload from the PlatformIO toolbar, or:
 
-    cd ~/ESU_TAP/microros_firmware
+    cd ~/ESU_TAP/firmware/esp32
     pio run -t upload --upload-port /dev/ttyUSB0
 
 > `pio` is the VS Code extension's Core 6.x at `~/.platformio/penv/bin/pio`

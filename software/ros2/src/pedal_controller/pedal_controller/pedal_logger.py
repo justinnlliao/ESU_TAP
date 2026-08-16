@@ -46,7 +46,7 @@ from std_msgs.msg import Int32MultiArray
 class PedalLogger(Node):
 
     # Source codes as published in field 2 of /esu/activation_state.
-    # Must stay in sync with SRC_* in microros_firmware/src/esu_tap_microros.cpp.
+    # Must stay in sync with SRC_* in firmware/esp32/src/esu_tap_microros.cpp.
     SOURCE_NAMES = {0: 'surgeon', 1: 'computer', 2: 'baseline'}
 
     def __init__(self):

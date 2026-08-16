@@ -77,39 +77,36 @@ The PC bridges the ESP32 into the ROS 2 graph with the **micro-ROS agent**
 
 ```
 ESU_TAP/
-  microros_firmware/
-    platformio.ini              PlatformIO project (micro_ros_platformio)
+  hardware/
+    esu-tap-v2/                  active KiCad 9 design; project-local libraries
+    esu-tap-v1/                  archived KiCad revision
+  firmware/esp32/
+    platformio.ini               PlatformIO micro-ROS firmware project
     src/esu_tap_microros.cpp     ESP32 firmware (flash this)
     colcon.meta                  raises micro-ROS entity limits (see below)
-  ros2_ws/src/pedal_controller/  ROS 2 (ament_python) package
-    pedal_controller/
-      pedal_commander.py         service CLIENT — command cut/coag (interactive/pulse/script)
-      pedal_logger.py            subscribes /esu/activation_state, logs edges to CSV
-      system_test.py             interactive full-system acceptance test
-      latency_test.py            automated round-trip + command latency benchmark
-      mock_esu_node.py           software stand-in for the ESP32 (pre-hardware testing)
-  esu_tap_pcb/esu_tap_v1/        KiCad schematic + PCB layout
+  software/ros2/                 ROS 2 (ament_python) workspace
+    src/pedal_controller/        command, logging, latency, and system-test nodes
   docs/
     ESU_TAP_v2_change_list.md    next-revision hardware/firmware changes
     connector_documentation.md   confirmed connector pinout and wiring
-  ros2_ws/SETUP.md               full build-and-run instructions
+  software/ros2/SETUP.md         full build-and-run instructions
 ```
 
 ## Quickstart (ROS 2 Humble on Ubuntu)
 
-See `ros2_ws/SETUP.md` for the complete walkthrough. In brief:
+See `software/ros2/SETUP.md` for the complete walkthrough. In brief:
 
 **Build the workspace once:**
 ```bash
 source /opt/ros/humble/setup.bash
-cd ~/ESU_TAP/ros2_ws
+cd ~/ESU_TAP/software/ros2
 colcon build
 source install/setup.bash
 ```
 
 **Flash the firmware** (PlatformIO — NOT the Arduino IDE, see Firmware notes):
 ```bash
-cd ~/ESU_TAP/microros_firmware
+cd ~/ESU_TAP/firmware/esp32
 pio run -t upload
 ```
 

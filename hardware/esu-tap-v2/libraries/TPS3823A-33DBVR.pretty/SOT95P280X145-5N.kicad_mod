@@ -26,7 +26,7 @@
   (fp_line (start 2.11 -1.7) (end 2.11 1.7) (layer F.CrtYd) (width 0.05))
   (fp_line (start 2.11 1.7) (end -2.11 1.7) (layer F.CrtYd) (width 0.05))
   (fp_line (start -2.11 1.7) (end -2.11 -1.7) (layer F.CrtYd) (width 0.05))
-  (model "${KIPRJMOD}/libraries/3dmodels/TPS3823-33DBVR.3dshapes/TPS3823-33DBVR.step"
+  (model "${KIPRJMOD}/libraries/3dmodels/TPS3823A-33DBVR.3dshapes/TPS3823A-33DBVR.step"
     (offset (xyz 0 0 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))

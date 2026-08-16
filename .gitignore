@@ -6,6 +6,8 @@ _autosave-*
 
 # KiCad local settings & caches (regenerated)
 *.kicad_prl
+~*.lck
+\#auto_saved_files#
 fp-info-cache
 
 # KiCad fabrication / export outputs (regenerated from board files)
@@ -14,6 +16,7 @@ gerbers/
 *.zip
 *.drl
 *.gbr
+/outputs/
 
 # Filesystem-MCP delete workaround — never commit
 _trash/

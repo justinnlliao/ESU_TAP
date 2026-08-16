@@ -6,6 +6,6 @@
   (lib (name "SMAJ5.0A")(type "KiCad")(uri "${KIPRJMOD}/libraries/SMAJ5.0A.kicad_sym")(options "")(descr "Littelfuse SMAJ5.0A unidirectional TVS diode"))
   (lib (name "SMAJ6.0A")(type "KiCad")(uri "${KIPRJMOD}/libraries/SMAJ6.0A.kicad_sym")(options "")(descr "Littelfuse SMAJ6.0A unidirectional TVS diode"))
   (lib (name "PESD5V0S1BA_DG_115")(type "KiCad")(uri "${KIPRJMOD}/libraries/PESD5V0S1BA_DG_115.kicad_sym")(options "")(descr "Nexperia PESD5V0S1BA bidirectional ESD diode"))
-  (lib (name "TPS3823-33DBVR")(type "KiCad")(uri "${KIPRJMOD}/libraries/TPS3823-33DBVR.kicad_sym")(options "")(descr "Texas Instruments TPS3823-33DBVR watchdog voltage supervisor"))
+  (lib (name "TPS3823A-33DBVR")(type "KiCad")(uri "${KIPRJMOD}/libraries/TPS3823A-33DBVR.kicad_sym")(options "")(descr "Texas Instruments TPS3823A-33DBVR watchdog voltage supervisor"))
   (lib (name "PJ-102AH")(type "KiCad")(uri "${KIPRJMOD}/libraries/PJ-102AH.kicad_sym")(options "")(descr "CUI Devices PJ-102AH thin-pin through-hole barrel jack"))
 )

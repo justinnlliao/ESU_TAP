@@ -187,6 +187,7 @@
         }
       ],
       "track_widths": [
+        0.0,
         0.0
       ],
       "tuning_pattern_settings": {
@@ -464,7 +465,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "esu_tap_v1.kicad_pro",
+    "filename": "esu_tap_v2.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -488,10 +489,17 @@
         "wire_width": 6
       },
       {
+        "clearance": 0.8,
+        "name": "COMMON_ISO",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
+      },
+      {
         "clearance": 0.3,
         "name": "PWR",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 1,
+        "priority": 2,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.5,
         "via_diameter": 0.6,
@@ -501,7 +509,7 @@
         "clearance": 0.3,
         "name": "Signal",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 0,
+        "priority": 1,
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.3,
         "via_diameter": 0.6,
@@ -529,6 +537,10 @@
       {
         "netclass": "Signal",
         "pattern": "*COAG*"
+      },
+      {
+        "netclass": "COMMON_ISO",
+        "pattern": "*_COMMON"
       }
     ]
   },

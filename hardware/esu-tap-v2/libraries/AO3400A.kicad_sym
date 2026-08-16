@@ -34,7 +34,7 @@
     (property "SnapEDA_Link" "https://www.snapeda.com/parts/AO3400A/Alpha/view-part/?ref=snap" (id 11) (at 0 0 0)
       (effects (font (size 1.27 1.27)) (justify bottom) hide)
     )
-    (property "MP" "AO3400A" (id 12) (at 0 0 0)
+    (property "LCSC" "C20917" (id 12) (at 0 0 0)
       (effects (font (size 1.27 1.27)) (justify bottom) hide)
     )
     (property "Description" "\n                        \n                            N-Channel 30 V 5.7A (Ta) 1.4W (Ta) Surface Mount SOT-23-3\n                        \n" (id 13) (at 0 0 0)

@@ -23,7 +23,7 @@ real serial) — those need the board.
 - Workspace built:
 
       source /opt/ros/humble/setup.bash
-      cd ~/ESU_TAP/ros2_ws
+      cd ~/ESU_TAP/software/ros2
       colcon build
       source install/setup.bash
 
@@ -32,7 +32,7 @@ real serial) — those need the board.
 Source ROS 2 and the workspace in **each** terminal first:
 
     source /opt/ros/humble/setup.bash
-    source ~/ESU_TAP/ros2_ws/install/setup.bash
+    source ~/ESU_TAP/software/ros2/install/setup.bash
 
 **Terminal 1 — mock ESP32:**
 
@@ -83,7 +83,7 @@ Source ROS 2 and the workspace in **each** terminal first:
 
 Replace the mock with the real thing:
 
-1. Flash `microros_firmware/src/esu_tap_microros.cpp` to the ESP32 with
+1. Flash `firmware/esp32/src/esu_tap_microros.cpp` to the ESP32 with
    PlatformIO (see `SETUP.md` §5).
 2. Start the micro-ROS agent instead of the mock node:
 
