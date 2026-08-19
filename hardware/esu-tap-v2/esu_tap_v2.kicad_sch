@@ -4035,6 +4035,55 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "PESD5V0S1BA_DG_115:PESD5V0S1BA_DG_115"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 3.81 0)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "PESD5V0S1BA_DG_115"
+				(at 0 -3.81 0)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Footprint" "PESD5V0S1BA_DG_115:SOD2613X115N"
+				(at 0 0 0)
+				(effects (font (size 1.27 1.27)) (hide yes))
+			)
+			(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/PESD5V0S1BA_BB_BL.pdf"
+				(at 0 0 0)
+				(effects (font (size 1.27 1.27)) (hide yes))
+			)
+			(property "Description" "Nexperia PESD5V0S1BA, bidirectional ESD protection diode, SOD-323 (SC-76)"
+				(at 0 0 0)
+				(effects (font (size 1.27 1.27)) (hide yes))
+			)
+			(symbol "PESD5V0S1BA_DG_115_0_1"
+				(rectangle
+					(start -1.27 1.27)
+					(end 1.27 -1.27)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "K1" (effects (font (size 1.016 1.016))))
+					(number "1" (effects (font (size 1.016 1.016))))
+				)
+				(pin passive line
+					(at 5.08 0 180)
+					(length 3.81)
+					(name "K2" (effects (font (size 1.016 1.016))))
+					(number "2" (effects (font (size 1.016 1.016))))
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(rectangle
 		(start 176.784 16.764)
@@ -4794,16 +4843,6 @@
 	)
 	(wire
 		(pts
-			(xy 138.43 132.08) (xy 158.75 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4e18cf3e-cb44-43a0-bc4f-d704f14406e0")
-	)
-	(wire
-		(pts
 			(xy 222.25 82.55) (xy 222.25 81.28)
 		)
 		(stroke
@@ -5144,16 +5183,6 @@
 	)
 	(wire
 		(pts
-			(xy 58.42 35.56) (xy 58.42 46.99)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "adeff466-4540-4325-865b-8b20fbe0af89")
-	)
-	(wire
-		(pts
 			(xy 220.98 45.72) (xy 220.98 44.45)
 		)
 		(stroke
@@ -5171,16 +5200,6 @@
 			(type default)
 		)
 		(uuid "b3fde53f-310b-46b0-a408-f8456603b8ce")
-	)
-	(wire
-		(pts
-			(xy 142.24 168.91) (xy 158.75 168.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b4217087-626e-4d9d-85f6-68dd4cee8f6d")
 	)
 	(wire
 		(pts
@@ -5261,16 +5280,6 @@
 			(type default)
 		)
 		(uuid "cbb42506-e9be-440a-9457-e447e80eabc3")
-	)
-	(wire
-		(pts
-			(xy 138.43 134.62) (xy 158.75 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cd563f82-5ef7-490b-91af-e942da3fa7d6")
 	)
 	(wire
 		(pts
@@ -5612,7 +5621,7 @@
 		)
 		(uuid "0eeb323d-546f-447f-ade3-3642bb2b34f8")
 	)
-	(label "BI_SENSE"
+	(label "BI_SENSE_EXT"
 		(at 92.71 123.19 90)
 		(effects
 			(font
@@ -5982,7 +5991,7 @@
 		)
 		(uuid "c6b66e40-740c-415c-8a0b-e02c1e7aed61")
 	)
-	(label "COAG_SENSE"
+	(label "COAG_SENSE_EXT"
 		(at 38.1 143.51 270)
 		(effects
 			(font
@@ -6012,7 +6021,7 @@
 		)
 		(uuid "e5c3e674-7362-426c-bbca-5eb0c1ece9a1")
 	)
-	(label "CUT_SENSE"
+	(label "CUT_SENSE_EXT"
 		(at 38.1 123.19 90)
 		(effects
 			(font
@@ -6051,6 +6060,118 @@
 			(justify right bottom)
 		)
 		(uuid "fec1d5a0-11fb-4437-ac23-7c93ad9ce035")
+	)
+	(label "J5_RAW"
+		(at 58.42 35.56 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "6938d9ca-2bfe-4857-b584-a402f92d91b0")
+	)
+	(label "J5_RAW"
+		(at 75 27.46 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "5a634e0c-3975-4c56-8d0b-77e67c60a882")
+	)
+	(label "FUSED_5V"
+		(at 75 32.54 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "78c4da1e-936b-42ee-9850-488538982d5e")
+	)
+	(label "FUSED_5V"
+		(at 81.19 32.54 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "9ae08299-c655-4454-ac70-a659aaf3eaae")
+	)
+	(label "+5V"
+		(at 88.81 32.54 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "7b94977b-f2f6-440f-aa8b-fd60dbcb94d8")
+	)
+	(label "CUT_SENSE_EXT"
+		(at 138.43 132.08 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "c9cc0529-4353-4fa6-be16-782b5adbba56")
+	)
+	(label "COAG_SENSE_EXT"
+		(at 138.43 134.62 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "d8e81420-98d3-47d2-ad18-5440ccb204f2")
+	)
+	(label "BI_SENSE_EXT"
+		(at 142.24 168.91 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "a0cb484f-d997-4faf-88c5-953c91893d02")
+	)
+	(label "CUT_SENSE_EXT"
+		(at 184.92 180 180)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "e5adfc08-64cb-4146-9b76-0b17c4aeb124")
+	)
+	(label "GND"
+		(at 195.08 180 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "f948bae8-2615-47b6-b54e-4c666afe10d7")
+	)
+	(label "CUT_SENSE_EXT"
+		(at 205 177.46 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "d1e700c8-d340-43ec-96c2-3421a7ff93cf")
+	)
+	(label "CUT_SENSE"
+		(at 205 182.54 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "a337df87-510c-40a8-a207-e2fba9c3ec1d")
+	)
+	(label "COAG_SENSE_EXT"
+		(at 184.92 190 180)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "2a485b88-7f82-45b2-ab88-ac0321371112")
+	)
+	(label "GND"
+		(at 195.08 190 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "9be9de13-b7f3-4762-a9fe-72e93e6eafbd")
+	)
+	(label "COAG_SENSE_EXT"
+		(at 205 187.46 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "ebaa3dfa-aedc-4e51-9743-91284351ca45")
+	)
+	(label "COAG_SENSE"
+		(at 205 192.54 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "9eb60c82-6eca-4f74-880b-da115b02acbb")
+	)
+	(label "BI_SENSE_EXT"
+		(at 184.92 200 180)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "90d137ad-37ba-4f7a-83f7-5d953c2b507a")
+	)
+	(label "GND"
+		(at 195.08 200 0)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "5b0fe9ca-f2fb-40f5-bb3d-a3fe3616c288")
+	)
+	(label "BI_SENSE_EXT"
+		(at 205 197.46 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "c0d348de-ce9f-48e8-83ea-7223140fcf76")
+	)
+	(label "BI_SENSE"
+		(at 205 202.54 90)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "746bb098-c7ff-46bb-baa1-94207098a908")
+	)
+	(text "Input protection: F1 PTC → D10 Schottky → +5V"
+		(exclude_from_sim no)
+		(at 74 22 0)
+		(effects (font (size 1.27 1.27)))
+		(uuid "57de21fd-1830-44f3-a952-64bc3318da63")
+	)
+	(text "Sense protection: cable-side PESD clamp, then 1k series to ESP32"
+		(exclude_from_sim no)
+		(at 190 171 0)
+		(effects (font (size 1.27 1.27)))
+		(uuid "bea5bbf6-fcdb-4f40-98d0-18dc0ddd6a4a")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -13049,6 +13170,156 @@
 				)
 			)
 		)
+	)
+	(symbol
+		(lib_id "Device:R_Small_US")
+		(at 75 30 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6d12a7bd-4303-495d-a922-4076a18adac9")
+		(property "Reference" "F1" (at 77 28.5 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "1812L110/16DR" (at 77 31 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Fuse:Fuse_1812_4532Metric" (at 75 30 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "https://www.littelfuse.com/~/media/electronics/datasheets/resettable_ptcs/littelfuse_ptc_1812l_datasheet.pdf.pdf" (at 75 30 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Littelfuse 1812L110/16DR, 1.10 A hold, 2.20 A trip, 16 V resettable PTC" (at 75 30 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "LCSC" "C142746" (at 75 30 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "dd2623aa-1ebe-4543-91ed-3f1a08bb3778"))
+		(pin "2" (uuid "2a88333b-cd0a-4eb4-967c-cf0e5b4ff693"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "F1") (unit 1))))
+	)
+	(symbol
+		(lib_id "Diode:1N4148W")
+		(at 85 32.54 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "e716650c-081d-485b-a420-d70b6f9c7882")
+		(property "Reference" "D10" (at 85 35.08 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "SS24" (at 85 30 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Diode_SMD:D_SMA" (at 85 32.54 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "https://datasheet.lcsc.com/datasheet/pdf/778bc72f15bf860dca965a107e79ddf5.pdf" (at 85 32.54 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "SS24 Schottky diode, 40 V, 2 A, SMA; reverse-polarity protection" (at 85 32.54 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "LCSC" "C115726" (at 85 32.54 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "4a56e1cf-2b9d-44d3-a956-bd8761c4ddd2"))
+		(pin "2" (uuid "c345f271-bcde-405a-b4b7-4937e943f096"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "D10") (unit 1))))
+	)
+	(symbol
+		(lib_id "PESD5V0S1BA_DG_115:PESD5V0S1BA_DG_115")
+		(at 190 180 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "3fd1cb7f-9914-4c20-a88d-c510dd8ce88b")
+		(property "Reference" "D11" (at 190 176.19 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "PESD5V0S1BA" (at 190 183.81 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "PESD5V0S1BA_DG_115:SOD2613X115N" (at 190 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/PESD5V0S1BA_BB_BL.pdf" (at 190 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Bidirectional ESD clamp for CUT_SENSE cable-side node" (at 190 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "a2ff1637-9456-4680-8974-d152b043b1b7"))
+		(pin "2" (uuid "e4deab55-c85b-4df0-9b8f-09c979eb7895"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "D11") (unit 1))))
+	)
+	(symbol
+		(lib_id "PESD5V0S1BA_DG_115:PESD5V0S1BA_DG_115")
+		(at 190 190 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6143fd52-c80a-4269-a1f2-9610f5ac9ccb")
+		(property "Reference" "D12" (at 190 186.19 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "PESD5V0S1BA" (at 190 193.81 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "PESD5V0S1BA_DG_115:SOD2613X115N" (at 190 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/PESD5V0S1BA_BB_BL.pdf" (at 190 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Bidirectional ESD clamp for COAG_SENSE cable-side node" (at 190 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "8c89b2c4-4ac5-4e7d-afa4-2d96e65025ba"))
+		(pin "2" (uuid "2ddd2cf0-a0d7-4f0c-be99-b6aff3a5b7cc"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "D12") (unit 1))))
+	)
+	(symbol
+		(lib_id "PESD5V0S1BA_DG_115:PESD5V0S1BA_DG_115")
+		(at 190 200 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6a8db965-f849-4787-9489-4ff14091c3b0")
+		(property "Reference" "D13" (at 190 196.19 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "PESD5V0S1BA" (at 190 203.81 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "PESD5V0S1BA_DG_115:SOD2613X115N" (at 190 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/PESD5V0S1BA_BB_BL.pdf" (at 190 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Bidirectional ESD clamp for BI_SENSE cable-side node" (at 190 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "7f30063f-5695-41cb-bc92-b20f08c74a9b"))
+		(pin "2" (uuid "3ff82bfe-2fd0-4b25-af26-c7484a5bc406"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "D13") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:R_Small_US")
+		(at 205 180 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "19d7e660-5213-417a-8ca7-fceeaed1b306")
+		(property "Reference" "R15" (at 207 178.5 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "1k" (at 207 181 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder" (at 205 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "~" (at 205 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "1 kOhm series resistor between CUT_SENSE cable node and ESP32" (at 205 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "LCSC" "C11702" (at 205 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "abd71ecd-3800-403f-bb24-2e0d3b34580c"))
+		(pin "2" (uuid "3c070d07-8c11-422b-ae1d-d79f574cfa81"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "R15") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:R_Small_US")
+		(at 205 190 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "1204e81f-1520-4185-a761-23939930c209")
+		(property "Reference" "R16" (at 207 188.5 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "1k" (at 207 191 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder" (at 205 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "~" (at 205 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "1 kOhm series resistor between COAG_SENSE cable node and ESP32" (at 205 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "LCSC" "C11702" (at 205 190 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "c28eda50-7a90-492a-b172-adebee6b4431"))
+		(pin "2" (uuid "0556baa0-9f89-4634-80c1-d8d0739fb313"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "R16") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:R_Small_US")
+		(at 205 200 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "4341eef6-c080-4971-ac48-b7abbade7222")
+		(property "Reference" "R17" (at 207 198.5 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "1k" (at 207 201 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder" (at 205 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "~" (at 205 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "1 kOhm series resistor between BI_SENSE cable node and ESP32" (at 205 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "LCSC" "C11702" (at 205 200 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(pin "1" (uuid "25f97ec2-dade-40fc-bd7f-6db08d750556"))
+		(pin "2" (uuid "e762c323-ba9a-42d4-92c9-10a44f61ca4f"))
+		(instances (project "esu_tap_v2" (path "/a95291a4-284f-470e-b313-ae7d3223205c" (reference "R17") (unit 1))))
 	)
 	(sheet_instances
 		(path "/"
