@@ -1764,7 +1764,7 @@
 		)
 		(uuid "1794c5a1-18d1-4df2-b567-58714867c17a")
 	)
-	(hierarchical_label "NC"
+	(hierarchical_label "NO"
 		(shape input)
 		(at 157.48 88.9 90)
 		(effects
