@@ -7,7 +7,6 @@
 	(title_block
 		(title "ESU-TAP")
 		(rev "v2.0")
-		(company "Justin Liao")
 	)
 	(lib_symbols
 		(symbol "AO3400A:AO3400A"

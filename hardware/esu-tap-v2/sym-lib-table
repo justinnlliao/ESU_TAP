@@ -1,5 +1,10 @@
 (sym_lib_table
   (version 7)
+  (lib (name "Connector")(type "KiCad")(uri "${KICAD10_SYMBOL_DIR}/Connector.kicad_sym")(options "")(descr "KiCad 10 standard connector symbols"))
+  (lib (name "Device")(type "KiCad")(uri "${KICAD10_SYMBOL_DIR}/Device.kicad_sym")(options "")(descr "KiCad 10 standard device symbols"))
+  (lib (name "Diode")(type "KiCad")(uri "${KICAD10_SYMBOL_DIR}/Diode.kicad_sym")(options "")(descr "KiCad 10 standard diode symbols"))
+  (lib (name "Mechanical")(type "KiCad")(uri "${KICAD10_SYMBOL_DIR}/Mechanical.kicad_sym")(options "")(descr "KiCad 10 standard mechanical symbols"))
+  (lib (name "power")(type "KiCad")(uri "${KICAD10_SYMBOL_DIR}/power.kicad_sym")(options "")(descr "KiCad 10 standard power symbols"))
   (lib (name "ESP32-DEVKITC-32E")(type "KiCad")(uri "${KIPRJMOD}/libraries/ESP32-DEVKITC-32E.kicad_sym")(options "")(descr ""))
   (lib (name "G6K-2F-Y")(type "KiCad")(uri "${KIPRJMOD}/libraries/G6K-2F-Y.kicad_sym")(options "")(descr "Omron G6K-2F-Y SMD DPDT relay"))
   (lib (name "AO3400A")(type "KiCad")(uri "${KIPRJMOD}/libraries/AO3400A.kicad_sym")(options "")(descr "Alpha & Omega AO3400A SOT-23 MOSFET"))
