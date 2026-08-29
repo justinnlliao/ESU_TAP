@@ -4836,7 +4836,7 @@
 		(uuid "f871773f-938f-405c-8cf7-d24cb5130f3d")
 	)
 	(no_connect
-		(at 124.46 57.15)
+		(at 83.82 41.91)
 		(uuid "029d32af-cb4e-4311-af3d-1b8dfaed4635")
 	)
 	(no_connect
@@ -4868,7 +4868,7 @@
 		(uuid "2df715bd-c776-4b90-b92d-1bfa17335fcc")
 	)
 	(no_connect
-		(at 83.82 54.61)
+		(at 124.46 57.15)
 		(uuid "2e844e82-7ee1-4c05-ae65-38d17464c4c4")
 	)
 	(no_connect
@@ -4876,7 +4876,7 @@
 		(uuid "325588bf-ad5b-49a0-933e-1691900dcf91")
 	)
 	(no_connect
-		(at 83.82 52.07)
+		(at 83.82 44.45)
 		(uuid "49ba51c5-2bda-4551-914a-d5c02052e4b8")
 	)
 	(no_connect
@@ -4900,8 +4900,8 @@
 		(uuid "6777aa56-98fb-41ee-93b9-93733da48461")
 	)
 	(no_connect
-		(at 124.46 52.07)
-		(uuid "6959d00e-79c0-434b-b9bd-f8a1ebbb43b4")
+		(at 124.46 54.61)
+		(uuid "6c208c1d-7266-48bc-82d1-0aa509c7b5b8")
 	)
 	(no_connect
 		(at 83.82 67.31)
@@ -4909,7 +4909,7 @@
 	)
 	(no_connect
 		(at 83.82 62.23)
-		(uuid "a3824804-53e8-422c-89cf-fa38c61ef0fc")
+		(uuid "8fe703fd-4c38-4d74-a01c-102c4637c64e")
 	)
 	(no_connect
 		(at 124.46 72.39)
@@ -4936,7 +4936,7 @@
 		(uuid "d935319b-0d9c-432a-9904-c6b8e832a5d8")
 	)
 	(no_connect
-		(at 124.46 54.61)
+		(at 124.46 64.77)
 		(uuid "df39d263-9d78-42ca-83ed-b3d33348ef05")
 	)
 	(no_connect
@@ -5057,6 +5057,16 @@
 	)
 	(wire
 		(pts
+			(xy 135.89 39.37) (xy 124.46 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1a70014f-b802-4fff-8a92-967b93ea095d")
+	)
+	(wire
+		(pts
 			(xy 35.56 78.74) (xy 35.56 76.2)
 		)
 		(stroke
@@ -5167,7 +5177,7 @@
 	)
 	(wire
 		(pts
-			(xy 81.28 44.45) (xy 83.82 44.45)
+			(xy 81.28 54.61) (xy 83.82 54.61)
 		)
 		(stroke
 			(width 0)
@@ -5287,16 +5297,6 @@
 	)
 	(wire
 		(pts
-			(xy 124.46 31.75) (xy 130.81 31.75)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "60edc2b2-2acf-4b87-8fce-fa9bb9d040d6")
-	)
-	(wire
-		(pts
 			(xy 201.93 149.86) (xy 204.47 149.86)
 		)
 		(stroke
@@ -5407,6 +5407,16 @@
 	)
 	(wire
 		(pts
+			(xy 127 26.67) (xy 124.46 26.67)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "80fdf7df-9149-4584-847e-732481b2ad18")
+	)
+	(wire
+		(pts
 			(xy 90.17 119.38) (xy 87.63 119.38)
 		)
 		(stroke
@@ -5474,6 +5484,16 @@
 			(type default)
 		)
 		(uuid "91f51f0c-51c7-44e8-8b4b-2808095ffba9")
+	)
+	(wire
+		(pts
+			(xy 135.89 29.21) (xy 124.46 29.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "94d0bd69-3c02-47fc-99f7-03e127d800bd")
 	)
 	(wire
 		(pts
@@ -5667,7 +5687,7 @@
 	)
 	(wire
 		(pts
-			(xy 127 64.77) (xy 124.46 64.77)
+			(xy 127 52.07) (xy 124.46 52.07)
 		)
 		(stroke
 			(width 0)
@@ -5737,6 +5757,16 @@
 	)
 	(wire
 		(pts
+			(xy 127 31.75) (xy 124.46 31.75)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e8bcd471-6f13-4904-84e8-9af09fd94d0f")
+	)
+	(wire
+		(pts
 			(xy 242.57 147.32) (xy 245.11 147.32)
 		)
 		(stroke
@@ -5774,16 +5804,6 @@
 			(type default)
 		)
 		(uuid "efd2ac38-136c-41fc-be1d-ff7ef7816834")
-	)
-	(wire
-		(pts
-			(xy 130.81 29.21) (xy 124.46 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f1afddfb-5f67-476d-8d38-826d341730b8")
 	)
 	(wire
 		(pts
@@ -5857,7 +5877,7 @@
 	)
 	(wire
 		(pts
-			(xy 81.28 41.91) (xy 83.82 41.91)
+			(xy 81.28 52.07) (xy 83.82 52.07)
 		)
 		(stroke
 			(width 0)
@@ -5875,7 +5895,7 @@
 		)
 		(uuid "febcfc96-928d-45c6-92c3-c805f0e0b227")
 	)
-	(label "CUT_CTRL"
+	(label "COAG_SENSE"
 		(at 81.28 36.83 180)
 		(effects
 			(font
@@ -5945,8 +5965,8 @@
 		)
 		(uuid "2feb3aa9-acf6-4f93-8c1f-63c1947fd1a1")
 	)
-	(label "COAG_SENSE"
-		(at 81.28 41.91 180)
+	(label "COAG_CTRL"
+		(at 81.28 52.07 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6075,7 +6095,7 @@
 		)
 		(uuid "7e1211af-4c26-4fd7-80ce-a57b6c69d047")
 	)
-	(label "WATCHDOG"
+	(label "CUT_CTRL"
 		(at 81.28 49.53 180)
 		(effects
 			(font
@@ -6106,7 +6126,7 @@
 		(uuid "95e90a39-9511-4135-8d31-8d07486db9e0")
 	)
 	(label "BI_SENSE"
-		(at 127 64.77 0)
+		(at 127 52.07 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6175,8 +6195,8 @@
 		)
 		(uuid "a9bfef8f-e41b-4d47-a219-e1b3472acb32")
 	)
-	(label "COAG_CTRL"
-		(at 81.28 44.45 180)
+	(label "WATCHDOG"
+		(at 81.28 54.61 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6527,85 +6547,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 143.51 29.21 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "104741f6-9a05-4326-b8f7-4587ed75e20c")
-		(property "Reference" "#PWR016"
-			(at 149.86 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 147.32 29.2099 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 143.51 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 143.51 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 143.51 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "fd92b76a-6de7-4f10-b775-e36fbe860a74")
-		)
-		(instances
-			(project "esu_tap_v2"
-				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "#PWR016")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R_Small_US")
 		(at 44.45 54.61 90)
 		(unit 1)
@@ -6933,86 +6874,6 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "H2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 143.51 31.75 90)
-		(mirror x)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "200a1e19-8432-4805-b4cb-70bfd6e1940e")
-		(property "Reference" "#PWR026"
-			(at 149.86 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 147.32 31.7501 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 143.51 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 143.51 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 143.51 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "52be726f-7c66-4768-b616-dab035c80ec3")
-		)
-		(instances
-			(project "esu_tap_v2"
-				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "#PWR026")
 					(unit 1)
 				)
 			)
@@ -7602,6 +7463,108 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:LED")
+		(at 135.89 31.75 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "288e0158-9ab9-47d8-9106-fc3785a5cb76")
+		(property "Reference" "D9"
+			(at 137.414 36.83 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "RED"
+			(at 137.668 35.052 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
+			(at 135.89 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 135.89 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Light emitting diode"
+			(at 135.89 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 135.89 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2286"
+			(at 135.89 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "447b5740-9e7c-4ab1-bbcb-6c46f6fc5385")
+		)
+		(pin "2"
+			(uuid "e1e6942a-f6cb-4ac0-9fd1-d4bbbcba6282")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "D9")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Mechanical:MountingHole")
 		(at 111.76 80.01 0)
 		(unit 1)
@@ -7911,6 +7874,108 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:LED")
+		(at 144.78 39.37 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5266b196-b889-4647-ac15-693f559183ec")
+		(property "Reference" "D10"
+			(at 144.526 43.688 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "YELLOW"
+			(at 144.78 41.91 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
+			(at 144.78 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 144.78 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Light emitting diode"
+			(at 144.78 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 144.78 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2287"
+			(at 144.78 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "dac102b1-13da-4614-a5c0-80aed6659714")
+		)
+		(pin "2"
+			(uuid "ac7e9096-31c8-46e5-86b5-166a9a5bdba6")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "D10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:C_Small")
 		(at 48.26 73.66 0)
 		(mirror x)
@@ -7977,7 +8042,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C296720"
+		(property "LCSC" "C49678"
 			(at 48.26 73.66 0)
 			(hide yes)
 			(show_name no)
@@ -7998,6 +8063,85 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "C2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 148.59 29.21 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5c86f056-5fea-46d3-a2dd-ec138320b185")
+		(property "Reference" "#PWR016"
+			(at 154.94 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 152.4 29.2099 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 148.59 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 148.59 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 148.59 29.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e0e2bc68-ead2-4caf-adb9-14703a0f0c1e")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR016")
 					(unit 1)
 				)
 			)
@@ -8304,7 +8448,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Fuse:Fuse_1812_4532Metric"
+		(property "Footprint" "Fuse_1812_PTC:Fuse_1812_4532Metric"
 			(at 41.91 38.1 0)
 			(hide yes)
 			(show_name no)
@@ -8838,87 +8982,8 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 137.16 39.37 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "82a92808-53d6-4974-b5df-789833b5bd0f")
-		(property "Reference" "#PWR017"
-			(at 143.51 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 140.97 39.3699 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 137.16 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 137.16 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 137.16 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "8d6801c8-47c7-4a19-b478-5103bfa2deae")
-		)
-		(instances
-			(project "esu_tap_v2"
-				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "#PWR017")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:LED")
-		(at 139.7 29.21 180)
+		(at 144.78 29.21 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8926,9 +8991,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "82e59526-ed35-4a92-aa23-4814b8889a39")
+		(uuid "83c20488-b38a-4da1-9f69-50e94d9684bf")
 		(property "Reference" "D8"
-			(at 141.224 24.13 0)
+			(at 146.304 24.13 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8937,8 +9002,8 @@
 				)
 			)
 		)
-		(property "Value" "YELLOW"
-			(at 141.478 25.908 0)
+		(property "Value" "BLUE"
+			(at 146.558 25.908 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8948,7 +9013,7 @@
 			)
 		)
 		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
-			(at 139.7 29.21 0)
+			(at 144.78 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8959,7 +9024,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 139.7 29.21 0)
+			(at 144.78 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8970,7 +9035,7 @@
 			)
 		)
 		(property "Description" "Light emitting diode"
-			(at 139.7 29.21 0)
+			(at 144.78 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8981,7 +9046,7 @@
 			)
 		)
 		(property "Sim.Pins" "1=K 2=A"
-			(at 139.7 29.21 0)
+			(at 144.78 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8991,8 +9056,8 @@
 				)
 			)
 		)
-		(property "LCSC" "C2287"
-			(at 139.7 29.21 0)
+		(property "LCSC" "C2288"
+			(at 144.78 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9003,10 +9068,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "dc5572d9-5d38-4847-b615-98b073c35be9")
+			(uuid "3ada7a76-6c5f-44b7-8775-68c7c82e547f")
 		)
 		(pin "2"
-			(uuid "4fbe2843-3e52-4693-a624-59bfa99d1a96")
+			(uuid "8417aaaf-2a9b-4a53-836a-3a7bcb459ba4")
 		)
 		(instances
 			(project "esu_tap_v2"
@@ -9089,96 +9154,6 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "#PWR034")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R_Small_US")
-		(at 133.35 29.21 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "8719d5a6-8d4e-4a05-a751-a3a93bd39bb4")
-		(property "Reference" "R15"
-			(at 136.906 26.924 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "680"
-			(at 133.35 26.924 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 133.35 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 133.35 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, small US symbol"
-			(at 133.35 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C137948"
-			(at 133.35 29.21 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "745992d7-281d-4813-86f8-caf247e1a91b")
-		)
-		(pin "1"
-			(uuid "09ea5a6a-f430-4045-947d-ba014245be4e")
-		)
-		(instances
-			(project "esu_tap_v2"
-				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "R15")
 					(unit 1)
 				)
 			)
@@ -9384,7 +9359,7 @@
 	)
 	(symbol
 		(lib_id "Device:R_Small_US")
-		(at 133.35 31.75 90)
+		(at 138.43 29.21 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -9392,9 +9367,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8e991219-c66d-49c3-87be-bec92f8b1e8b")
-		(property "Reference" "R16"
-			(at 136.652 34.036 90)
+		(uuid "8ab20dad-2602-40fe-b238-324214edd4dc")
+		(property "Reference" "R15"
+			(at 138.684 25.4 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9404,7 +9379,7 @@
 			)
 		)
 		(property "Value" "680"
-			(at 132.334 34.036 90)
+			(at 138.684 27.178 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9414,7 +9389,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 133.35 31.75 0)
+			(at 138.43 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9425,7 +9400,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 133.35 31.75 0)
+			(at 138.43 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9436,7 +9411,7 @@
 			)
 		)
 		(property "Description" "Resistor, small US symbol"
-			(at 133.35 31.75 0)
+			(at 138.43 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9447,7 +9422,7 @@
 			)
 		)
 		(property "LCSC" "C137948"
-			(at 133.35 31.75 90)
+			(at 138.43 29.21 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9458,23 +9433,23 @@
 			)
 		)
 		(pin "2"
-			(uuid "c2999c6a-745a-4b2f-9192-36f73ae8f7cb")
+			(uuid "488d2016-709d-48ff-98c5-af811090cb1e")
 		)
 		(pin "1"
-			(uuid "867af7f8-6a36-4b56-a0ce-5077fe54fd16")
+			(uuid "af51bbc3-dcda-4dd6-af71-ca85b507aba6")
 		)
 		(instances
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "R16")
+					(reference "R15")
 					(unit 1)
 				)
 			)
 		)
 	)
 	(symbol
-		(lib_id "Device:LED")
-		(at 133.35 39.37 180)
+		(lib_id "Device:R_Small_US")
+		(at 129.54 31.75 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -9482,9 +9457,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "93403dbc-4d6d-4767-9e14-0b5815969af6")
-		(property "Reference" "D10"
-			(at 133.096 41.656 0)
+		(uuid "8b03c416-bd06-4bfa-9dd4-d17e0ebbc0b2")
+		(property "Reference" "R16"
+			(at 129.794 36.068 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9493,8 +9468,8 @@
 				)
 			)
 		)
-		(property "Value" "RED"
-			(at 133.35 36.83 0)
+		(property "Value" "680"
+			(at 129.794 34.036 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9503,8 +9478,8 @@
 				)
 			)
 		)
-		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
-			(at 133.35 39.37 0)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 129.54 31.75 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9515,7 +9490,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 133.35 39.37 0)
+			(at 129.54 31.75 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9525,8 +9500,8 @@
 				)
 			)
 		)
-		(property "Description" "Light emitting diode"
-			(at 133.35 39.37 0)
+		(property "Description" "Resistor, small US symbol"
+			(at 129.54 31.75 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9536,8 +9511,8 @@
 				)
 			)
 		)
-		(property "Sim.Pins" "1=K 2=A"
-			(at 133.35 39.37 0)
+		(property "LCSC" "C137948"
+			(at 129.54 31.75 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9546,28 +9521,17 @@
 					(size 1.27 1.27)
 				)
 			)
-		)
-		(property "LCSC" "C2286"
-			(at 133.35 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a540aeab-c3b7-4e3a-941c-c005beea9739")
 		)
 		(pin "2"
-			(uuid "fc7ae563-5076-4917-9003-da4ef2a1fb25")
+			(uuid "019cebf4-6bec-4687-863c-8932080aba56")
+		)
+		(pin "1"
+			(uuid "d189c487-e126-4df7-8032-7759a4561a0e")
 		)
 		(instances
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "D10")
+					(reference "R16")
 					(unit 1)
 				)
 			)
@@ -9668,7 +9632,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 124.46 26.67 90)
+		(at 127 26.67 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -9678,7 +9642,7 @@
 		(dnp no)
 		(uuid "a09384d0-bd24-499a-a207-64eba76bbcc7")
 		(property "Reference" "#PWR04"
-			(at 130.81 26.67 0)
+			(at 133.35 26.67 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9689,7 +9653,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 127.254 26.67 90)
+			(at 129.794 26.67 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9700,7 +9664,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 124.46 26.67 0)
+			(at 127 26.67 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9711,7 +9675,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 124.46 26.67 0)
+			(at 127 26.67 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9722,7 +9686,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 124.46 26.67 0)
+			(at 127 26.67 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9739,108 +9703,6 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "#PWR04")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:LED")
-		(at 139.7 31.75 0)
-		(mirror y)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "a214cc65-1356-4a33-b1e1-c5dd9087a2e2")
-		(property "Reference" "D9"
-			(at 141.224 36.83 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "RED"
-			(at 141.478 35.052 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
-			(at 139.7 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 139.7 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Light emitting diode"
-			(at 139.7 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Sim.Pins" "1=K 2=A"
-			(at 139.7 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C2286"
-			(at 139.7 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "ce8b3e17-3d4a-4796-a595-9ddb0556cb14")
-		)
-		(pin "2"
-			(uuid "50a8c4de-81b2-407b-806e-aed872ef0654")
-		)
-		(instances
-			(project "esu_tap_v2"
-				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
-					(reference "D9")
 					(unit 1)
 				)
 			)
@@ -10167,7 +10029,8 @@
 	)
 	(symbol
 		(lib_id "Device:R_Small_US")
-		(at 127 39.37 90)
+		(at 138.43 39.37 90)
+		(mirror x)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -10175,9 +10038,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "abc2acd5-191b-448d-acd0-746606892954")
+		(uuid "aa8c011e-0e69-4b24-9d23-0145214c35b6")
 		(property "Reference" "R17"
-			(at 127 36.068 90)
+			(at 138.43 42.672 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10187,7 +10050,7 @@
 			)
 		)
 		(property "Value" "680"
-			(at 127 37.592 90)
+			(at 138.43 41.148 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10197,7 +10060,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
-			(at 127 39.37 0)
+			(at 138.43 39.37 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10208,7 +10071,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 39.37 0)
+			(at 138.43 39.37 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10219,7 +10082,7 @@
 			)
 		)
 		(property "Description" "Resistor, small US symbol"
-			(at 127 39.37 0)
+			(at 138.43 39.37 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10230,7 +10093,7 @@
 			)
 		)
 		(property "LCSC" "C137948"
-			(at 127 39.37 90)
+			(at 138.43 39.37 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10241,10 +10104,10 @@
 			)
 		)
 		(pin "2"
-			(uuid "e36e1201-ca07-4335-a457-427e4a99da1c")
+			(uuid "ea084ab7-424a-4960-94b2-7b297bdf2214")
 		)
 		(pin "1"
-			(uuid "f13c307c-02d1-4110-95c7-b5c0763dadaf")
+			(uuid "04cb5d05-52df-402f-8faf-58f73c2c67e7")
 		)
 		(instances
 			(project "esu_tap_v2"
@@ -10486,6 +10349,86 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "U5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 148.59 39.37 90)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b8a3b587-689a-4829-8727-0c0bb9ef5937")
+		(property "Reference" "#PWR017"
+			(at 154.94 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 152.4 39.3701 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 148.59 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 148.59 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 148.59 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "7deb3f96-71d6-421b-bdde-d7755427ac06")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR017")
 					(unit 1)
 				)
 			)
@@ -10841,6 +10784,86 @@
 			(project "esu_tap_v2"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
 					(reference "#PWR021")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 139.7 31.75 90)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "cf548f05-4283-4c6e-b347-b5c957449965")
+		(property "Reference" "#PWR026"
+			(at 146.05 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 143.51 31.7501 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 139.7 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 139.7 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 139.7 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "954acb31-5f64-4006-85c0-ff29d27c7581")
+		)
+		(instances
+			(project "esu_tap_v2"
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c"
+					(reference "#PWR026")
 					(unit 1)
 				)
 			)

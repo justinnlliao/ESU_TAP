@@ -8,4 +8,5 @@
   (lib (name "PESD5V0S1BA_DG_115")(type "KiCad")(uri "${KIPRJMOD}/libraries/PESD5V0S1BA_DG_115.pretty")(options "")(descr "Nexperia PESD5V0S1BA bidirectional ESD diode, SOD-323"))
   (lib (name "TPS3823A-33DBVR")(type "KiCad")(uri "${KIPRJMOD}/libraries/TPS3823A-33DBVR.pretty")(options "")(descr "Texas Instruments TPS3823A-33DBVR watchdog voltage supervisor, SOT-23-5"))
   (lib (name "PJ-102AH")(type "KiCad")(uri "${KIPRJMOD}/libraries/PJ-102AH.pretty")(options "")(descr "CUI Devices PJ-102AH thin-pin through-hole barrel jack"))
+  (lib (name "Fuse_1812_PTC")(type "KiCad")(uri "${KIPRJMOD}/libraries/Fuse_1812_PTC.pretty")(options "")(descr "Project-local 1812 resettable PTC footprint with valid 3D model"))
 )

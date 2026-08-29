@@ -29,6 +29,6 @@
   (model "${KIPRJMOD}/libraries/3dmodels/PESD5V0S1BA_DG_115.3dshapes/PESD5V0S1BA_DG_115.step"
     (offset (xyz 0 0 0))
     (scale (xyz 1 1 1))
-    (rotate (xyz 0 0 0))
+    (rotate (xyz -90 0 0))
   )
 )

@@ -211,7 +211,7 @@
       ],
       "track_widths": [
         0.0,
-        0.0
+        0.5
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -528,7 +528,7 @@
         "wire_width": 6
       },
       {
-        "clearance": 0.8,
+        "clearance": 0.5,
         "name": "COMMON_ISO",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "priority": 0,
@@ -582,7 +582,15 @@
       },
       {
         "netclass": "COMMON_ISO",
-        "pattern": "*_COMMON"
+        "pattern": "*_COM"
+      },
+      {
+        "netclass": "PWR",
+        "pattern": "*D5*"
+      },
+      {
+        "netclass": "PWR",
+        "pattern": "*F1*"
       }
     ]
   },

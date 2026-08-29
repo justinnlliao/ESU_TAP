@@ -26,6 +26,6 @@
   (model "${KIPRJMOD}/libraries/3dmodels/AO3400A.3dshapes/AO3400A.step"
     (offset (xyz 0 0 0))
     (scale (xyz 1 1 1))
-    (rotate (xyz 0 0 0))
+    (rotate (xyz -90 0 0))
   )
 )
