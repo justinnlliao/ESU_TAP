@@ -683,12 +683,16 @@
 			)
 		)
 		(pin "1"
-			(uuid "f9a161f0-1ab4-484e-912d-aa91be9de909")
+			(uuid "42e36253-7a52-40cf-bab5-cebef3cefa40")
 		)
 		(instances
-			(project "esu_tap_v2"
+			(project "esu_tap_v3"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/01f172af-3a2f-4c45-b5b8-da5d1fea548e"
 					(reference "#PWR018")
+					(unit 1)
+				)
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c/5636375b-82bd-47d7-874b-c8e841054995"
+					(reference "#PWR040")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9b0fe8f6-8022-488e-b71f-40762334b231"
@@ -714,7 +718,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "321b66be-4dd1-4ac9-9dbc-dd3f1376d547")
-		(property "Reference" "R9"
+		(property "Reference" "R11"
 			(at 158.75 104.1399 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -781,23 +785,27 @@
 			)
 		)
 		(pin "2"
-			(uuid "b2891588-8acc-47b8-959a-be19937a3c69")
+			(uuid "8a4fac4b-fc88-4d37-9747-1b0d9fb392b8")
 		)
 		(pin "1"
-			(uuid "d833f795-bcc3-44a7-9bc9-ab7c5b3088ff")
+			(uuid "db7ba382-5937-4341-a17b-9ca19be4071f")
 		)
 		(instances
-			(project "esu_tap_v2"
+			(project "esu_tap_v3"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/01f172af-3a2f-4c45-b5b8-da5d1fea548e"
-					(reference "R13")
+					(reference "R15")
+					(unit 1)
+				)
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c/5636375b-82bd-47d7-874b-c8e841054995"
+					(reference "R17")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9b0fe8f6-8022-488e-b71f-40762334b231"
-					(reference "R11")
+					(reference "R13")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9c5e1c8c-afec-4935-875e-5197a2a1283a"
-					(reference "R9")
+					(reference "R11")
 					(unit 1)
 				)
 			)
@@ -814,7 +822,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "57efacbe-40f7-49af-9174-ae8ed8aa4995")
-		(property "Reference" "D11"
+		(property "Reference" "D12"
 			(at 138.43 102.87 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -856,6 +864,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C19224"
+			(at 142.24 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" "Bidirectional ESD clamp for CUT_SENSE cable-side node"
 			(at 142.24 102.87 0)
 			(hide yes)
@@ -868,23 +887,27 @@
 			)
 		)
 		(pin "1"
-			(uuid "140269aa-4279-4e4c-91c8-76aedd8f078c")
+			(uuid "6716d45f-74e2-45d7-b571-a439e1501038")
 		)
 		(pin "2"
-			(uuid "34c2b476-9304-4a2e-893e-171d7fe3ea7c")
+			(uuid "c4618550-c5bb-4f9a-aabe-6645cf9774ec")
 		)
 		(instances
-			(project "esu_tap_v2"
+			(project "esu_tap_v3"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/01f172af-3a2f-4c45-b5b8-da5d1fea548e"
+					(reference "D14")
+					(unit 1)
+				)
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c/5636375b-82bd-47d7-874b-c8e841054995"
 					(reference "D15")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9b0fe8f6-8022-488e-b71f-40762334b231"
-					(reference "D14")
+					(reference "D13")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9c5e1c8c-afec-4935-875e-5197a2a1283a"
-					(reference "D11")
+					(reference "D12")
 					(unit 1)
 				)
 			)
@@ -901,7 +924,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "71fc5a86-c0ab-4ea1-b937-97d61463fbd4")
-		(property "Reference" "R8"
+		(property "Reference" "R10"
 			(at 149.606 105.664 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -966,23 +989,27 @@
 			)
 		)
 		(pin "1"
-			(uuid "ed545764-ad4e-46ec-8294-dbd3bbf1a29e")
+			(uuid "c560c52f-b266-4913-a7a5-758a53438d39")
 		)
 		(pin "2"
-			(uuid "63fef764-0082-4116-8dd3-8d68616e8cab")
+			(uuid "3772a957-573e-446b-9971-317b2e0b02ae")
 		)
 		(instances
-			(project "esu_tap_v2"
+			(project "esu_tap_v3"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/01f172af-3a2f-4c45-b5b8-da5d1fea548e"
-					(reference "R12")
+					(reference "R14")
+					(unit 1)
+				)
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c/5636375b-82bd-47d7-874b-c8e841054995"
+					(reference "R16")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9b0fe8f6-8022-488e-b71f-40762334b231"
-					(reference "R10")
+					(reference "R12")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9c5e1c8c-afec-4935-875e-5197a2a1283a"
-					(reference "R8")
+					(reference "R10")
 					(unit 1)
 				)
 			)
@@ -1055,12 +1082,16 @@
 			)
 		)
 		(pin "1"
-			(uuid "830cf1b6-6191-4ce4-af00-660d58f74a01")
+			(uuid "f3d2d823-eeb4-49b1-920b-9356a4a8f95d")
 		)
 		(instances
-			(project "esu_tap_v2"
+			(project "esu_tap_v3"
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/01f172af-3a2f-4c45-b5b8-da5d1fea548e"
 					(reference "#PWR039")
+					(unit 1)
+				)
+				(path "/a95291a4-284f-470e-b313-ae7d3223205c/5636375b-82bd-47d7-874b-c8e841054995"
+					(reference "#PWR041")
 					(unit 1)
 				)
 				(path "/a95291a4-284f-470e-b313-ae7d3223205c/9b0fe8f6-8022-488e-b71f-40762334b231"

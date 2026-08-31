@@ -254,7 +254,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": "v2.0"
+      "sch_revision": "v3.0"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -503,7 +503,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "esu_tap_v2.kicad_pro",
+    "filename": "esu_tap_v3.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -837,18 +837,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "esu_tap_v2.kicad_sch",
-        "name": "esu_tap_v2",
+        "filename": "esu_tap_v3.kicad_sch",
+        "name": "esu_tap_v3",
         "uuid": "a95291a4-284f-470e-b313-ae7d3223205c"
       }
     ],
-    "used_designators": "",
+    "used_designators": "D12,D16,#PWR6,#PWR28-29,#PWR40-42,Q5,J6-7,R18-21,U8,U10",
     "variants": []
   },
   "sheets": [
     [
       "a95291a4-284f-470e-b313-ae7d3223205c",
-      "esu_tap_v2"
+      "esu_tap_v3"
     ],
     [
       "c09addc8-0a58-4bed-9ed3-747ec35ac32b",
@@ -873,6 +873,14 @@
     [
       "01f172af-3a2f-4c45-b5b8-da5d1fea548e",
       "BI INPUT"
+    ],
+    [
+      "c0542dbc-49b9-4154-83ec-0a5ec521c0a1",
+      "LIGA DRIVER"
+    ],
+    [
+      "5636375b-82bd-47d7-874b-c8e841054995",
+      "BI INPUT1"
     ]
   ],
   "text_variables": {},
