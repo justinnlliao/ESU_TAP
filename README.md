@@ -154,17 +154,18 @@ ros2 topic echo /esu/activation_state
 - **Auto-reconnect state machine.** The firmware pings the agent, builds entities
   when it appears, and tears them down + rebuilds if the agent restarts or drops.
   On a dropped link it forces the relays OFF (fail-safe).
-- **Watchdog.** The firmware must pet the watchdog (IO4) within its ~1.6 s
+- **Watchdog.** The firmware must pet the watchdog (IO14) within its ~1.6 s
   interval or the board drops to pass-through. See the Failsafe section.
 
 ## Power
 
-- **5 V DC, center-positive**, via the barrel jack. Use a regulated supply; the
-  board is **not** overvoltage-tolerant (see [ROADMAP](docs/ROADMAP.md)).
-- Do **not** power from USB and the barrel jack at the same time. During
-  sessions, run from the barrel jack with USB disconnected — this also breaks the
-  mains-earth path through the laptop. USB is for flashing (generator
-  disconnected).
+- **5 V DC, center-positive**, via the barrel jack. This powers the relay rail.
+  Use a regulated supply; the board is **not** overvoltage-tolerant (see
+  [ROADMAP](docs/ROADMAP.md)).
+- **USB remains connected during normal operation.** It powers the ESP32 module,
+  provides the 3.3 V logic rail, and carries the micro-ROS serial transport. The
+  barrel jack does not connect to the ESP32's 5 V header; it does not power the
+  ESP32 by itself.
 
 ## Confirmed hardware interface
 

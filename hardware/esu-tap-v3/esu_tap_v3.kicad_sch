@@ -12868,7 +12868,7 @@
 			(color 0 0 0 0)
 		)
 		(uuid "5636375b-82bd-47d7-874b-c8e841054995")
-		(property "Sheetname" "BI INPUT1"
+		(property "Sheetname" "LIGA INPUT"
 			(at 63.5 170.7384 0)
 			(show_name no)
 			(do_not_autoplace no)

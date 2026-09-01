@@ -1,0 +1,7 @@
+Reference,Item,Specification,Quantity per board,Assembly,Notes
+"J1, J3",Screw terminal block,1x04; 5.08 mm pitch; horizontal,2,Hand solder,"Matches TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal footprint."
+"J2, J4",Screw terminal block,1x03; 5.08 mm pitch; horizontal,2,Hand solder,"Matches TerminalBlock_Phoenix_MKDS-1,5-3-5.08_1x03_P5.08mm_Horizontal footprint."
+J5,CUI PJ-102AH DC barrel jack,5.5 mm OD x 2.1 mm ID; horizontal thin-pin,1,Hand solder,"Use the exact PJ-102AH mechanical style; this is the board footprint in the design."
+U1,ESP32-DevKitC-32E development board,ESP32-DevKitC-32E,1,Install after PCBA,"Buy the DevKitC-32E module; it is intentionally excluded from JLC assembly."
+U1 mounting,Single-row female socket header,1x19; 2.54 mm pitch,2,Hand solder,"The U1 footprint has two 19-position rows. Use sockets if the ESP32 module has male headers."
+External power,Regulated DC wall adapter,5 V; center-positive; 5.5 mm x 2.1 mm plug,1,External,"Connects to J5. Choose a quality adapter rated at least 1 A."

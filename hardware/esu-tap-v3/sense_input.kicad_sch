@@ -864,7 +864,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C19224"
+		(property "Description" "Bidirectional ESD clamp for CUT_SENSE cable-side node"
 			(at 142.24 102.87 0)
 			(hide yes)
 			(show_name no)
@@ -875,7 +875,7 @@
 				)
 			)
 		)
-		(property "Description" "Bidirectional ESD clamp for CUT_SENSE cable-side node"
+		(property "LCSC" "C19224"
 			(at 142.24 102.87 0)
 			(hide yes)
 			(show_name no)
