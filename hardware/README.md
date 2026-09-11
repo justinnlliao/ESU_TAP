@@ -1,13 +1,22 @@
 # Hardware
 
-KiCad source for ESU-TAP lives here. Each revision is self-contained: open the
-`.kicad_pro` file in its revision directory and KiCad resolves the project-local
-symbols, footprints, and 3D models through `${KIPRJMOD}`.
+Each revision contains a KiCad project and project-local libraries registered
+through `${KIPRJMOD}` in its symbol and footprint tables.
 
-- [`esu-tap-v2/`](esu-tap-v2/) is the active KiCad 9 revision.
-- [`esu-tap-v1/`](esu-tap-v1/) is retained as a historical reference.
+- [v1](esu-tap-v1/README.md): historical monopolar design.
+- [v2](esu-tap-v2/README.md): CUT/COAG/bipolar design.
+- [v3](esu-tap-v3/README.md): four-channel prototype, reviewed using KiCad 10.
 
-Fabrication exports are generated only for a reviewed release and should be
-attached to that release or stored under a revision-specific `production/`
-directory. Local Gerbers, BOMs, placement files, caches, and lock files are
-ignored by Git.
+Read [protection and validation status](../docs/SAFETY_AND_VALIDATION.md).
+Manufacturing checks are not functional or clinical-use approval. The v3
+watchdog arrangement has an independent-shutdown/sustained-bypass gap, and the
+checked-in firmware is not a complete v3 implementation.
+
+Revision-specific exports live in `fabrication/`. Use Gerbers, BOM, and CPL from
+the same saved design. Some generated files (including Gerbers, drill files,
+and ZIPs) are Git-ignored; do not assume a clone contains the complete release.
+
+For JLCPCB, the CPL must contain `Designator,Mid X,Mid Y,Rotation,Layer`, with
+coordinates in mm and layers Top/Bottom. Native KiCad position CSV headers may
+need conversion. Verify the reference set against the assembly BOM and confirm
+part-specific orientations in the assembler preview.

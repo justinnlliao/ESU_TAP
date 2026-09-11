@@ -4,6 +4,19 @@ This is the PC-side ROS 2 package for the ESU-TAP foot pedal interposer.
 It talks to the ESP32, which runs micro-ROS firmware (`firmware/esp32/`)
 and connects over a **wired USB serial** link via the micro-ROS agent.
 
+## Current limitations — read before running
+
+These are development instructions for a disconnected low-voltage dummy contact
+fixture, not a clinical or generator acceptance procedure. See
+[protection and validation status](../../docs/SAFETY_AND_VALIDATION.md).
+
+The current firmware supports CUT/COAG/bipolar and publishes four fields, while
+the logger, mock, and legacy two-channel tools expect the older interface. Do not
+rely on the current logger's source attribution. LigaSure firmware is unfinished.
+Powered operation without the ROS agent is not dependable; unpowered bypass is
+a separate intended hardware behavior requiring physical testing. Commands have
+no expiration if the commanding process dies but the agent remains alive.
+
 Workspace layout:
 
     software/ros2/src/pedal_controller/
@@ -14,8 +27,9 @@ Workspace layout:
     ---------------------------------            --------------------------------
     service server  /esu/cut   (SetBool) <-----  pedal_commander (service client)
     service server  /esu/coag  (SetBool) <-----
+    service server  /esu/bipolar (SetBool) <--- (legacy commander needs updating)
     publisher /esu/activation_state       ----->  pedal_logger (subscriber)
-       (Int32MultiArray [cut, coag, source])
+       (Int32MultiArray [cut, coag, bipolar, source])
 
 The micro-ROS **agent** on the PC bridges the ESP32's USB serial to the ROS 2
 graph. It replaces the old custom serial bridge node.
@@ -74,7 +88,8 @@ From the `software/ros2` folder (the parent of `src`):
 ## 4. Run the system — the exact terminals
 
 The firmware **auto-connects and auto-reconnects**, so you do NOT need to press
-EN, and boot order no longer matters. Start these in any order.
+EN for normal reconnection. Boot-order and failure behavior still require
+testing; do not infer safety from the reconnection state machine.
 
 In every terminal below, first source both:
 
@@ -91,7 +106,8 @@ Within a second or two you should see `session established` and entities being
 created, WITHOUT pressing EN. If you restart the agent, the board reconnects on
 its own. (If the port is busy: `sudo fuser -k /dev/ttyUSB0`, then rerun.)
 
-**Terminal 2 — logger** (records activations to CSV in `~/pedal_logs/`):
+**Terminal 2 — legacy logger** (currently suitable for the matching two-channel
+mock only; incompatible with current real-firmware source fields):
 
     ros2 run pedal_controller pedal_logger
 
@@ -101,7 +117,7 @@ its own. (If the port is busy: `sudo fuser -k /dev/ttyUSB0`, then rerun.)
 
     #   c  ENTER  -> toggle CUT
     #   g  ENTER  -> toggle COAG
-    #   x  ENTER  -> all OFF (panic)
+    #   x  ENTER  -> request legacy CUT/COAG OFF (not an independent emergency stop)
     #   s  ENTER  -> show state
     #   h  ENTER  -> help
 
@@ -113,13 +129,14 @@ Or drive the services directly, no commander needed:
 
 ### Optional test / benchmark nodes (Terminal 3, in place of the commander)
 
-**Interactive full-system acceptance test** — walks CUT/COAG for both computer
-and surgeon paths, cross-checks published telemetry, prints pass/fail:
+**Legacy interactive software test** — walks CUT/COAG and checks the old
+telemetry contract. It is not a v2/v3 system acceptance test:
 
     ros2 run pedal_controller system_test
 
 **Automated latency benchmark** — toggles a channel N times, reports round-trip
-and command latency stats. Run with the generator RF output OFF:
+and command latency stats. Use a dummy contact fixture with the generator
+disconnected. Software timestamps do not measure physical relay release or RF:
 
     ros2 run pedal_controller latency_test
     ros2 run pedal_controller latency_test --ros-args -p iterations:=200 -p channel:=coag
@@ -174,9 +191,10 @@ holds it.
 
 ## Notes
 
-- Requirements met: (1) service servers for cut/coag activation and
-  deactivation, (2) a topic that logs activation/deactivation status.
-- Source attribution (surgeon vs computer) is done on the ESP32 and reported
-  in the third field of `/esu/activation_state`.
+- Current firmware includes CUT/COAG/bipolar services; the legacy tools do not
+  establish complete three- or four-channel operation.
+- Current firmware puts source attribution in the fourth field. Legacy tools
+  reading the third field need correction. Baseline means boot or reconnection,
+  not necessarily a device reset, and inferred state is not measured RF output.
 - The workspace targets Ubuntu 22.04. Windows is possible but the agent and
   serial ports differ; Ubuntu is the supported path.

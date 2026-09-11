@@ -8,21 +8,42 @@ track alongside the board they target.
 
 ---
 
-## [v2] — Monopolar + Bipolar (current)
+## [Unreleased] — Documentation and v3 CPL correction (2026-09-11)
 
-v2 is a functional and safety redesign of v1. It adds a bipolar channel, fixes
-the v1 bypass failsafe, and adds a firmware watchdog and input/signal
-protection. Targets KiCad 9 and JLCPCB PCBA.
+- Corrected unsupported claims of guaranteed watchdog shutdown, sustained
+  bypass, and powered-offline operation. See
+  [current protection and validation status](docs/SAFETY_AND_VALIDATION.md).
+- Documented the current v3 watchdog wiring, incomplete LigaSure firmware,
+  firmware/logger schema mismatch, and outstanding physical fault tests.
+- Converted v3 CPL headers to JLCPCB's five-column schema, preserving positions
+  and equivalent orientations. Assembler upload/placement approval remains separate.
+- No hardware or executable firmware behavior was changed by these corrections.
+
+Historical entries below describe earlier design intentions and reported findings,
+not a fresh qualification of manufactured v1/v2 boards. Prior blanket safety
+claims are superseded by the validation document.
+
+## [v3] — Four-channel hardware prototype
+
+Adds a fourth pedal/generator path labeled LigaSure. Current hardware uses
+GPIO33 control, GPIO25 sense, and GPIO18 through R22 to D12 for its indicator.
+Firmware and generator-specific compatibility validation remain incomplete.
+
+## [v2] — Monopolar + Bipolar
+
+v2 adds a bipolar channel, common-routing changes, an external watchdog, and
+input/signal protection. These changes were intended to improve failure handling;
+they do not establish a verified fail-safe system. Originally targeted KiCad 9
+and JLCPCB PCBA.
 
 ### Added
 - **Bipolar channel.** Second independent pedal/generator path (BV-1254B
   bipolar footswitch). One switching relay, one sense line, one bypass path.
   Mono and bipolar are fully separate signal chains.
-- **Watchdog-held failsafe.** TPS3823A-33DBVR (non-latching variant) supervises
-  the firmware. The ESP32 pets it on IO4; RESET drives a low-side MOSFET (Q4)
-  that grounds the bypass-relay coil rail (`/COIL_GND`). Healthy firmware keeps
-  the coils energized (active mode); a firmware hang **or** power loss drops the
-  coils and the board falls back to pass-through. Watchdog interval ~1.6 s.
+- **Watchdog-controlled bypass.** The current v2 PCB uses GPIO14 to U9 WDI;
+  U9 RESET drives Q1 and `/COIL_GND`. ESP32 EN is unconnected. This is not
+  independent activation shutdown or guaranteed sustained fallback; the earlier
+  “watchdog-held failsafe” description was incorrect.
 - **Third bypass pole for the commons.** The v1 bypass only rerouted the hot
   lines; v2 adds pole(s) so the generator commons are bridged to the pedal
   commons in the unpowered state, completing the return path (fixes the v1 bug
@@ -31,23 +52,22 @@ protection. Targets KiCad 9 and JLCPCB PCBA.
   pedal-common and generator-common nets (`/MONO_PED_COM`, `/MONO_GEN_COM`,
   `/BI_PED_COM`, `/BI_GEN_COM`). In bypass, each modality returns through its
   own generator common; neither touches board GND or the other modality. In the
-  powered state the pedal commons switch to GND so sensing works. (Per review
-  from R. Prakash.)
-- **5 V barrel-jack power input** with an ORing/reverse-polarity Schottky, so
-  the board runs from a dedicated supply with USB disconnected during sessions
-  (breaks the mains path through the laptop).
+  powered state the pedal commons switch to GND so sensing works.
+- **5 V barrel-jack input** for the relay rail, with a series reverse-polarity
+  Schottky. The present serial architecture retains USB for ESP32 logic power
+  and communication; the previous USB-disconnected operating claim is superseded.
 - **Input rail protection:** SMAJ6.0A TVS across +5 V (transient clamp), and a
   resettable PTC in series with the +5 V input for fault containment
   (short / reverse).
-- **eFuse footprint (0 Ω jumper populated).** A footprint for a future overvoltage
-  eFuse is reserved and bridged with a 0 Ω link, so the protection can be added
-  in a later revision without a respin. See ROADMAP.
+- **Overvoltage cutoff proposal.** Earlier notes proposed an eFuse/0-ohm
+  reservation. Do not treat that proposal as an implemented or drop-in feature;
+  inspect the current design and see ROADMAP.
 - **Sense-line protection.** Each of `CUT_SENSE` / `COAG_SENSE` / `BI_SENSE`
   routes `connector → PESD5V0S1BA ESD clamp → ~1 kΩ series resistor → ESP32`,
   so no GPIO sits directly on an externally reachable net.
-- **RF ferrite footprint (unpopulated).** Placed but not populated; v1 ran clean
-  without RF filtering, so it is insurance pending a bench measurement rather
-  than a committed part. See ROADMAP.
+- **RF filtering proposal.** Earlier notes discussed optional ferrites. Current
+  population must follow the exact schematic and BOM, not historical DNP notes.
+  Lack of observed interference in earlier trials is not RF-immunity validation.
 
 ### Changed
 - **Relay coil drivers: MMBT3904 → AO3400A** (LCSC C20917). Logic-level N-MOSFET,
@@ -70,9 +90,9 @@ protection. Targets KiCad 9 and JLCPCB PCBA.
   common at the connector and the internal common net used by the switching /
   bypass relays were separate nets, so a computer command closed a relay to a net
   that never reached the generator. Unified in v2; forwarding now completes.
-- **Watchdog part correction.** Selected the non-latching TPS3823**A** variant;
-  the plain part latches RESET low if WDI toggles during a reset event, which is
-  wrong for a failsafe.
+- **Watchdog selection.** TPS3823A-33DBVR was selected. Earlier A/non-A
+  suffix reasoning was not a system-level safety analysis. The selected part's
+  temporary RESET behavior must be considered in the actual circuit.
 - **C3 realizable footprint.** 22 µF changed from an unrealistic 0402 to 0805.
 - **D1 topology.** SMAJ6.0A is a shunt TVS from +5 V to GND (obsolete `5V_JACK`
   net removed).
@@ -95,8 +115,8 @@ sense-then-forward architecture and the micro-ROS interface.
 - micro-ROS interface (`/esu/cut`, `/esu/coag` services;
   `/esu/activation_state` telemetry) with deterministic surgeon-vs-computer
   attribution.
-- Auto-connect / auto-reconnect state machine with fail-safe relay-off on link
-  loss.
+- Auto-connect / auto-reconnect state machine with software-requested relay-off
+  on detected link loss; this is not independently guaranteed fault handling.
 - ROS 2 `pedal_controller` package: logger, commander, latency test, system
   test, mock node.
 - Confirmed the footswitch connector (AMP CPC Series 1) and BV-1253B pinout by

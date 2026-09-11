@@ -1,6 +1,15 @@
 # ESU-TAP v2 — Change List
 
-**Status:** draft for review
+**Status:** superseded historical draft; not a current build or safety specification.
+
+> **Correction, 2026-09-11:** this archive mixes proposals and historical claims.
+> Its “verified” labels are not fresh validation of the present boards or the
+> user's manufactured v1. The watchdog rationale in §3.2 does not provide
+> sustained fallback or independent activation shutdown. GPIO maps, USB/WiFi
+> operation, eFuse/enable-switch proposals, protection population, and software
+> completion statements below must not be followed as current instructions.
+> See [Protection features and validation status](../SAFETY_AND_VALIDATION.md)
+> and the exact revision's source/BOM. Historical text is retained for traceability.
 **Basis:** v1 netlist (`esu_tap_v1.net`, Eeschema 9.0.4, 2026-07-16), Omron G6K datasheet K106-E1-11, ASG-300 published specs, Zettler AZ733 + 2N7002 datasheets.
 
 **Confidence key**
@@ -168,6 +177,11 @@ Latent with two mono channels. Live with three and real arbitration.
 **This is what sizes the board — not relay dielectric.**
 
 ### 3.2 Watchdog-held failsafe (promote from deferred)
+
+> **Superseded reasoning:** the current watchdog output is a temporary RESET
+> pulse, not a persistent proof of controller health. Releasing only bypass
+> coils does not remove the independent activation-contact path. The table and
+> recommendations below record the original incomplete design rationale.
 
 v1: bypass coil power-tied (U4 pin 1 = +5V, pin 8 = GND ✅). Covers unpowered. **Does not cover powered-but-hung.**
 

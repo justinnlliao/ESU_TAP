@@ -2,52 +2,27 @@
 """
 system_test.py
 
-Interactive full-system acceptance test for the ESU-TAP interposer.
+Legacy interactive CUT/COAG software test. This is not a full v2/v3 acceptance
+or safety test. It checks the old [cut, coag, source] contract; current firmware
+publishes [cut, coag, bipolar, source]. Resolve that mismatch before interpreting
+its telemetry/source checks. LigaSure support is not implemented here.
 
-This drives the REAL /esu/cut and /esu/coag services and verifies the entire
-control + telemetry chain end to end:
+SAFETY / SCOPE (updated 2026-09-11)
+Use a disconnected low-voltage dummy contact fixture, not an operating generator.
+This script issues real activation service requests. Human confirmation, relay
+clicks, and service acknowledgements do not establish independent shutdown or
+RF delivery. The legacy runtime prompts still refer to generator behavior;
+those prompts are not authorization or guidance to connect a generator.
 
-    command  ->  ESP32 service callback  ->  relay closes generator contact
-             ->  timer publishes /esu/activation_state  ->  this node observes it
+The procedure must be revised with the firmware/logger interface and physical
+fault tests before system acceptance. See software/ros2/TESTING.md and
+docs/SAFETY_AND_VALIDATION.md. These documentation edits change no test logic.
 
-It also subscribes to /esu/activation_state itself, so it can independently
-confirm that each command produced the expected published state with the
-expected source attribution -- rather than trusting that the relay clicked.
-
-It is INTERACTIVE by design: it pauses before every step so the operator
-(you) can watch the board, listen for the relay, and confirm the generator's
-behaviour before proceeding. Nothing is automated that could energise the
-generator without a human in the loop.
-
------------------------------------------------------------------------------
-SAFETY / SCOPE
------------------------------------------------------------------------------
-This test was written for the following configuration:
-  - DRE ASG-300 connected
-  - Active circuit OPEN (no electrode, no load)
-  - Operator triggering each step
-
-Recommended: run the FIRST full pass with generator RF output OFF (or disabled
-/ at minimum). The purpose of this test is to validate control and logging, not
-to deliver energy. Energise only after the plumbing is proven.
-
-With output enabled and an open circuit, the ASG-300 is expected to ALARM on
-activation (no return path). That alarm confirms the relay closed the
-generator-side contact -- it is a datapoint, not a fault.
-
-This script never enables generator output. It only opens/closes the
-interposer relays, exactly as the robot would.
-
------------------------------------------------------------------------------
-USAGE
------------------------------------------------------------------------------
-Prereqs, in separate terminals:
-  1. micro-ROS agent running, ESP32 flashed and connected (LEDs off = ready)
-  2. (optional but recommended) pedal_logger running, to capture the CSV
-  3. this node:  ros2 run pedal_controller system_test
-
-The logger and this node both subscribe to /esu/activation_state, so you can
-cross-check the live console here against the CSV afterwards.
+Bench development usage after compatibility corrections:
+  1. Start the serial agent and target-revision firmware.
+  2. Use the revision-compatible logger if recording inferred state.
+  3. Run: ros2 run pedal_controller system_test
+  4. Independently measure fixture contacts; a published state is not feedback.
 """
 
 import sys

@@ -13,10 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Justin',
-    maintainer_email='jalia@jhu.edu',
+    maintainer='anonymous',
+    maintainer_email='anonymous@example.com',
     description='ROS 2 package for commanding and logging the ESU-TAP foot pedal interposer',
-    license='MIT',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

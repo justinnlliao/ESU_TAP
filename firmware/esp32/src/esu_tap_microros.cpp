@@ -3,6 +3,11 @@
  *
  * micro-ROS firmware for the ESU-TAP v2 interposer on ESP32.
  *
+ * REVIEW NOTE (2026-09-11): v3 LigaSure is not implemented. The current ROS
+ * logger expects an incompatible legacy payload. Powered-offline forwarding
+ * and independent watchdog activation shutdown are incomplete. See
+ * docs/SAFETY_AND_VALIDATION.md. This note does not change firmware behavior.
+ *
  * v2 adds the BIPOLAR channel and a hardware WATCHDOG pet, on top of the v1
  * monopolar sense-then-forward design.
  *
@@ -43,9 +48,9 @@
  *   Watchdog: TPS3823A-33 supervisor. WDI = IO14. It is EDGE-triggered: the
  *            firmware must TOGGLE IO14 periodically. Holding it high OR low
  *            past the ~1.6 s (0.9-2.5 s worst case) timeout trips RESET, which
- *            drops the bypass-relay coils and puts the board in pass-through.
- *            Petting is done from the timer_callback so a hung main path stops
- *            petting and the board fails safe.
+ *            temporarily releases the bypass-relay coils. RESET is not wired
+ *            to ESP32 EN and does not independently disable activation relays.
+ *            This is not guaranteed sustained fallback or fail-safe shutdown.
  *
  *   IMPORTANT: SENSE and CTRL are SEPARATE nets per channel. A relay command
  *   does NOT move the pedal contacts, so a computer-commanded activation
@@ -193,7 +198,8 @@ void destroy_entities();
 // Edge-triggered: toggling WDI resets the timer. Called from timer_callback
 // (which runs every 10 ms while entities exist) and from the waiting loop, so
 // the board is petted whenever the firmware is alive. A genuine hang stops
-// both paths, RESET drops, coils de-energize, board falls back to pass-through.
+// both paths, but RESET only briefly releases the bypass coils. Independent
+// activation drive is not removed; a watchdog pulse is not a safety guarantee.
 inline void pet_watchdog() {
   unsigned long now = millis();
   if ((now - lastWdtToggleMs) >= WDT_TOGGLE_MS) {
@@ -385,7 +391,7 @@ void setup() {
   pinMode(PIN_LED_BI,     OUTPUT);
   pinMode(PIN_WDT,        OUTPUT);
 
-  digitalWrite(PIN_RELAY_CUT,  LOW);   // safe: relays open on boot
+  digitalWrite(PIN_RELAY_CUT,  LOW);   // request activation OFF on boot
   digitalWrite(PIN_RELAY_COAG, LOW);
   digitalWrite(PIN_RELAY_BI,   LOW);
   digitalWrite(PIN_LED_CUT,    LOW);
@@ -399,8 +405,8 @@ void setup() {
   delay(2000);
 
   // Entities + agent connection handled by the state machine in loop().
-  // Relays are already safe-OFF; the timer that forwards the pedal only runs
-  // once entities exist. The hardware bypass relay covers the unpowered case.
+  // Activation outputs are requested OFF; pedal forwarding only runs once
+  // entities exist. Unpowered bypass is intended, not a verified fault guarantee.
 }
 
 // ----------------------------- Loop --------------------------------
@@ -438,8 +444,8 @@ void loop() {
         }
         if (agent_state == AGENT_CONNECTED) {
           rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
-          // timer_callback pets the watchdog while connected; also pet here so
-          // a stalled executor spin doesn't starve the pet.
+          // Also pet after executor return. This does not prove the pedal/control
+          // timer is healthy; a blocked call would not reach this statement.
           pet_watchdog();
         } else {
           missed_pings = 0;
@@ -448,10 +454,12 @@ void loop() {
       break;
 
     case AGENT_DISCONNECTED:
-      // Link lost. Force relays/LEDs OFF (fail safe), tear down stale entities,
+      // Link lost. Request relays/LEDs OFF, tear down stale entities,
       // return to waiting. Keep petting -- a dropped agent is NOT a firmware
       // hang, and we don't want to also drop the board into hardware bypass
-      // just because the PC-side agent restarted.
+      // just because the PC-side agent restarted. LIMITATION: pedal forwarding
+      // stops while waiting, despite continued petting. This is not safe offline
+      // operation; see docs/SAFETY_AND_VALIDATION.md.
       digitalWrite(PIN_RELAY_CUT,  LOW);
       digitalWrite(PIN_RELAY_COAG, LOW);
       digitalWrite(PIN_RELAY_BI,   LOW);

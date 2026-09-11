@@ -4,13 +4,18 @@ pedal_commander.py
 
 ROS 2 service CLIENT for the ESU-TAP micro-ROS node.
 
-The ESP32 (esu_tap_node) hosts two std_srvs/SetBool services:
+This legacy client uses two std_srvs/SetBool services:
     /esu/cut    data=True -> CUT on,   data=False -> CUT off
     /esu/coag   data=True -> COAG on,  data=False -> COAG off
 
 This node calls those services. It replaces the old topic-publishing
 commander: activation is now a confirmed request/response, so we know the
 ESP32 acknowledged each command.
+
+An acknowledgement does not confirm contact closure or RF delivery. This client
+does not implement bipolar/LigaSure or an independent emergency stop. If it dies
+after ON while the agent stays alive, the current firmware command can persist.
+Use a disconnected dummy contact fixture; see docs/SAFETY_AND_VALIDATION.md.
 
 Modes:
   interactive : keyboard-driven (ENTER toggles on/off)

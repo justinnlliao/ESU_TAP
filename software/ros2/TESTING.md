@@ -3,17 +3,23 @@
 This document explains how to test the PC-side ROS 2 stack **without the
 physical ESP32 board**, using a software stand-in (`mock_esu_node`).
 
+The mock uses the legacy two-channel contract. It is not an exact model of
+current firmware, which publishes `[cut, coag, bipolar, source]`. The real logger
+still expects three fields. See [current limitations](../../docs/SAFETY_AND_VALIDATION.md).
+No passing result here establishes electrical safety, offline operation, or
+watchdog recovery. LigaSure software and fault-response tests remain incomplete.
+
 ## What this tests
 
-The mock node impersonates the ESP32 firmware exactly:
+The mock implements the legacy two-channel interface:
 
-- Hosts the two services the real firmware hosts: `/esu/cut`, `/esu/coag`
+- Hosts two legacy services: `/esu/cut`, `/esu/coag`
   (`std_srvs/SetBool`)
 - Publishes `/esu/activation_state` (`std_msgs/Int32MultiArray`, `[cut, coag, source]`)
 - Fakes a surgeon press every few seconds so source attribution is visible
 
 Running the **real** `pedal_commander` and **real** `pedal_logger` against the
-mock exercises the entire ROS 2 interface contract end-to-end. What it does NOT
+mock exercises that legacy interface contract. What it does NOT
 test is the hardware layer (relays, pedal sensing, generator, micro-ROS over
 real serial) — those need the board.
 
@@ -81,7 +87,9 @@ Source ROS 2 and the workspace in **each** terminal first:
 
 ## When the board arrives
 
-Replace the mock with the real thing:
+Do not directly substitute current firmware and assume the old tests apply.
+First fix the schema mismatch and extend the tools for the target hardware.
+Keep the generator disconnected and use a low-voltage dummy contact fixture:
 
 1. Flash `firmware/esp32/src/esu_tap_microros.cpp` to the ESP32 with
    PlatformIO (see `SETUP.md` §5).
@@ -90,5 +98,20 @@ Replace the mock with the real thing:
        docker run -it --rm -v /dev:/dev --privileged --net=host \
          microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
 
-3. Run the **same** `pedal_logger` and `pedal_commander` unchanged. If they
-   worked against the mock, the only new variables are hardware.
+3. Run revision-compatible logger, commander, and tests only after they have
+   been updated. Compare inferred messages against independently measured
+   contact closures, not just relay clicks or service acknowledgements.
+
+## Physical fault testing still required
+
+The detailed pending procedure is in
+[Protection features and validation status](../../docs/SAFETY_AND_VALIDATION.md).
+Record results for total and individual supply losses, agent/transport loss,
+commanding-process death with the agent alive, sense faults, and controller
+stalls with every activation ON and OFF. Observe several watchdog cycles and
+measure actual contact release and manual-path continuity.
+
+Define acceptable timing and recovery/re-arm criteria before testing. Do not
+mark a test passed just because a watchdog pulse or temporary bypass occurred.
+No physical fault-test results or numerical reliability rating are established
+by this document.

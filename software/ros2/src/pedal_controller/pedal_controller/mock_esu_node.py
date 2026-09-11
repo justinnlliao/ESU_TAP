@@ -5,7 +5,8 @@ mock_esu_node.py
 Software stand-in for the ESU-TAP ESP32 firmware, for testing the ROS 2 stack
 BEFORE the physical board arrives.
 
-It mimics exactly what the real micro-ROS firmware exposes:
+It implements the legacy two-channel interface, not the current firmware's
+four-field CUT/COAG/bipolar/source contract:
 
   SERVICES (hosted here, called by pedal_commander):
     /esu/cut    (std_srvs/SetBool)  data=true -> CUT on,  false -> CUT off
@@ -15,7 +16,7 @@ It mimics exactly what the real micro-ROS firmware exposes:
     /esu/activation_state  (std_msgs/Int32MultiArray)  [cut, coag, source]
       source: 0 = surgeon, 1 = computer
 
-Behaviour that matches the firmware:
+Mock behavior (not an exact firmware model):
   - When a service is called, it drives the internal cut/coag state and
     publishes a new activation_state with source=1 (computer).
   - It also SIMULATES surgeon presses on a timer (source=0) so you can see the
@@ -28,7 +29,7 @@ can be exercised end-to-end without hardware.
 KNOWN LIMITATION -- read before trusting a green test run:
   This node publishes directly from its service callbacks. The firmware does
   NOT; it has a single publish path in its timer callback. That difference
-  concealed a critical firmware bug (see docs/ESU_TAP_v2_change_list.md 1.4)
+  concealed a firmware bug (see docs/archive/ESU_TAP_v2_change_list.md 1.4)
   in which computer-commanded activations were never published at all, because
   the sense pins read the pedal contacts and a relay command does not move
   them. This mock passed cleanly the whole time.

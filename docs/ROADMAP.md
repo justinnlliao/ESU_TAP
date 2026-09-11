@@ -1,104 +1,56 @@
-# Roadmap & Known Limitations
+# Roadmap and known limitations
 
-Forward-looking items only. Completed work lives in [CHANGELOG.md](../CHANGELOG.md).
-This is the honest list of what the current board does **not** do, what is
-deferred, and what comes next.
+The current status is [Protection features and validation](SAFETY_AND_VALIDATION.md).
+These items include known implementation gaps, not merely optional upgrades.
+Archived proposals are not current assembly or safety specifications.
 
----
+## Fault handling
 
-## Known limitations (current board, v2)
+- Design and review an independent means of removing computer activation during
+  controller failure while preserving manual pedal control.
+- Define sustained bypass and deliberate recovery/re-arm behavior. The current
+  temporary watchdog RESET pulse does not provide this by itself.
+- Implement command expiration/controller-liveness handling and dependable
+  powered-offline pedal behavior. Agent connectivity alone is insufficient.
+- Audit the built ESP32 firmware's internal watchdog and reset settings.
+- Record dummy-fixture fault tests before making fault-tolerance claims.
+  Include stuck drivers/contacts; an MCU reset cannot repair these failures.
 
-These are deliberate scoping decisions, not defects. They matter most for anyone
-building this board from the published files.
+## Software compatibility
 
-### Power input is not overvoltage-tolerant
-The input protection (PTC + reverse-polarity Schottky + SMAJ6.0A TVS) covers
-**fault containment** — dead short and reversed polarity. It does **not** protect
-against a wrong-voltage adapter. A sustained 9–12 V input can expose the rail to
-damaging voltage before the PTC (a current device, not a voltage device) trips,
-and the TVS clamp (~10.3 V) is a pulse rating, not continuous.
+v3 hardware adds LigaSure, but checked-in firmware supports CUT/COAG/bipolar only.
+Coordinate the fourth service, message schema, logger, commander, mock, and tests.
+Use explicit hardware-revision selection rather than silently flashing a v3
+pin map onto older boards.
 
-- **Use a regulated 5 V DC, center-positive supply.** The jack is labeled as
-  such on the silkscreen.
-- An eFuse footprint is reserved and currently bridged with a 0 Ω jumper. A true
-  overvoltage-cutoff eFuse or a wide-input regulator can be dropped in there in a
-  future revision without a respin.
+Current firmware publishes `[cut, coag, bipolar, source]`; the logger expects
+`[cut, coag, source]`. Correct and test this mismatch before relying on data.
+v3 LigaSure uses GPIO33 control, GPIO25 sense, and GPIO18 LED through R22/D12.
 
-### RF filtering on the sense lines is not populated
-The ferrite footprints on `CUT_SENSE` / `COAG_SENSE` / `BI_SENSE` are placed but
-unpopulated. v1 (monopolar) ran on these same lines with no RF filtering and no
-observed issues, so coupled RF from the generator does not appear significant in
-this setup. The footprints exist as insurance; populate them only if a bench
-measurement shows RF on the lines. The ESD clamp + series resistor **are**
-populated (those guard against ESD/fault events, a different risk).
+## Power, signals, and interfaces
 
-### Not validated for clinical use
-This is a research / data-collection interposer. It has standard PCB clearances,
-no IEC 60601-1 isolation barrier, and screw-terminal connectors. Any use beyond
-the bench requires signal characterization, isolation validation, and a
-safety/regulatory review.
+- Use regulated 5 V center-positive power. PTC/Schottky/TVS components do not
+  provide a validated sustained-overvoltage cutoff. An eFuse is future design
+  work; do not assume an existing compatible footprint or drop-in installation.
+- Verify current footprints and BOM population instead of archived ferrite/DNP
+  proposals. Leaving a series element unpopulated can open a signal path.
+  RF immunity and sense-clamp performance require measurement.
+- Validate every pedal/generator pinout, signal level, common, and identity
+  connection. A relay path labeled LigaSure does not establish compatibility
+  with a particular vessel-sealing generator.
+- Evaluate enclosure, strain relief, isolation, EMC, and applicable safety
+  requirements before use beyond the disconnected bench fixture.
+- Optional future work includes appropriate overvoltage cutoff, keyed connectors,
+  generator feedback, and local logging. Do not assume standard VSPI pins are
+  free; several are already used, including GPIO18 on v3.
 
-### Failsafe timing
-On a firmware hang, fallback to pass-through takes up to the watchdog interval
-(~1.6 s) plus relay release. On power loss it is just relay release (~ms). The
-board fails to **manual pedal control**, not to "off" — it cannot stop a
-generator that a human pedal is actively firing; that remains the operator's and
-the generator's responsibility.
+## Data integrity and reporting
 
----
+Published status is inferred sense/command state, not measured contacts or RF
+delivery. Generator arbitration may suppress a command; verify it per generator.
+Separate command, pedal, contact, and generator-feedback records would support
+stronger claims but are not all implemented.
 
-## Open verification items
-
-Things to confirm on the physical board or bench before relying on results.
-
-- **Footswitch line scope measurement.** Scope `CUT_SENSE` / `COAG_SENSE` /
-  `BI_SENSE` during a live activation to quantify any coupled RF. Resolves
-  whether the RF ferrite is ever needed and closes the isolation assumption.
-- **Bench continuity check on arrival.** Verify pedal → generator forwarding in
-  both powered (sensed + commanded) and unpowered (bypass) states, per modality,
-  before trusting the board in a session.
-- **Bipolar footswitch impedance.** Confirm the BV-1254B / bipolar jack idle
-  impedance matches the monopolar assumption (~24 Ω) at first bring-up.
-- **Watchdog hang test.** Deliberately stall the firmware and confirm the board
-  drops to bypass within the expected interval.
-- **Shared-common tolerance.** Confirm the generator tolerates its footswitch
-  behavior with the split-common bypass topology (mono and bipolar commons no
-  longer share GND in bypass).
-
----
-
-## Next revision (v3)
-
-**Modality roadmap:** v1 monopolar → v2 monopolar + bipolar → **v3 vessel
-sealing.** Each generation adds an independent pedal/generator path on the same
-interposer architecture, so the connector, bypass-pole, and forwarding work in
-v2 is the foundation v3 builds on.
-
-- **Vessel sealing channel.** Another pedal/generator path, cloned from the
-  bipolar channel. Requires its own footswitch and a generator with a
-  vessel-seal output (confirm the generator supports it before designing — it may
-  require different hardware). Same Step-0 characterization as bipolar: obtain
-  the footswitch, measure the jack, confirm the connector, then design.
-- **Overvoltage eFuse.** Populate the reserved eFuse footprint (currently a 0 Ω
-  jumper) for true wrong-adapter protection.
-- **Keyed cable connectors.** Swap screw terminals for keyed, latching,
-  strain-relieved cable connectors for deployment robustness.
-- **RS-232 telemetry.** Read generator-confirmed activation state directly
-  (blocked on generator firmware). Would let the logger record what the
-  generator *actually fired* rather than inferring from commands — see the
-  data-integrity note below.
-- **Standalone SD logging.** VSPI pins are kept clear on v2 (CUT LED moved off
-  IO18) so an SD card can be added without a re-layout.
-
----
-
-## Data-integrity note (imitation learning)
-
-The ASG-300 arbitrates simultaneous activations **first-come-first-served** —
-whichever channel fired first wins, and later commands are ignored while it is
-active. Because the board cannot observe generator-side state, a logged *command*
-is not proof of a generator *activation*: if the computer commands a channel
-while another is already active, the generator ignores it but the log would
-otherwise record it. The logging pipeline must therefore distinguish **command**
-from **activation** events and mark suppressed commands, rather than assuming
-every command fired. RS-232 telemetry (above) would resolve this directly.
+Report test conditions, repetitions, failures, and response times. No system
+failure probability or clinical-use approval is established. Passing ERC/DRC or
+a legacy mock test cannot substitute for this evidence.

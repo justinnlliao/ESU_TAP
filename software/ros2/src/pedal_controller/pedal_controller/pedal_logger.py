@@ -2,6 +2,11 @@
 """
 pedal_logger.py
 
+REVIEW NOTE (2026-09-11): this legacy reader expects three fields. Current
+firmware publishes [cut, coag, bipolar, source], so this reader misattributes
+source. Do not treat its output as validated current-firmware data. This is a
+documentation warning, not a schema fix. See docs/SAFETY_AND_VALIDATION.md.
+
 ROS 2 node -- logs ESU activation/deactivation events to CSV for imitation
 learning data collection.
 
@@ -21,9 +26,9 @@ inferring source on the PC, because the ESP32 sees the command and the sensed
 edge with no transport latency between them.
 
 source = 2 (baseline) is the ESP32's boot-time sync message, not a real
-activation. Seeing it mid-session means the ESP32 restarted. Any state change
-it implies is a DEVICE RESET, not a surgeon action -- labelling it 'surgeon'
-would write a phantom event into the dataset.
+activation. Current firmware also publishes it on reconnection, so it does not
+by itself prove an ESP32 restart. The legacy warning below needs updating along
+with the message schema; do not infer device-reset events solely from baseline.
 
 CSV columns:
   ros_time_ns  -- ROS wall-clock time in nanoseconds (PC receipt time)

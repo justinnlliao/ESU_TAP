@@ -4,6 +4,10 @@ latency_test.py
 
 Automated latency benchmark for the ESU-TAP control path.
 
+REVIEW NOTE (2026-09-11): legacy software tool, not current v2/v3 acceptance.
+Verify payload compatibility before interpreting results. Use a disconnected
+low-voltage dummy contact fixture; see docs/SAFETY_AND_VALIDATION.md.
+
 Measures TWO distinct latencies over many iterations and reports statistics
 for each separately:
 
@@ -36,8 +40,8 @@ period, not a slow board. If you need to reduce it, the fix is in the firmware
 here.
 
 This benchmark also does NOT measure physical relay closure or generator
-response -- both timestamps are taken in the ROS graph. True command-to-RF
-latency needs a scope on the generator contact.
+response -- both timestamps are taken in the ROS graph. Measuring a generator
+contact alone does not establish RF delivery timing.
 
 -----------------------------------------------------------------------------
 USAGE
@@ -50,9 +54,9 @@ A pedal_logger may be running or not; it does not affect the measurement.
   ros2 run pedal_controller latency_test --ros-args -p channel:=coag -p settle_ms:=80
 
 The benchmark toggles the chosen channel ON then OFF each iteration, so it
-returns the relay to open between measurements and never leaves it latched.
-It uses the ON edge for timing. Run with the generator RF output OFF unless
-you specifically want energised timing -- this fires the channel many times.
+requests OFF between measurements; interruption or a failed OFF request can
+leave a command active. It uses the ON edge for timing. Keep the generator
+disconnected: this issues repeated activation commands, not passive measurements.
 """
 
 import statistics
