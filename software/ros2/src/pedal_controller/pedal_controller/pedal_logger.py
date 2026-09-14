@@ -25,13 +25,13 @@ no transport latency between them.
 
 source = 2 (baseline) is the ESP32's boot-time / reconnection sync message, not
 a real activation. It does not by itself prove an ESP32 restart, but a baseline
-received WHILE a channel was active does indicate a mid-session reset (logged as
-a warning, since the dataset has a discontinuity there).
+received while a channel was active indicates a discontinuity, not proof of a
+device reset (an agent reconnection can cause the same message).
 
 CSV columns (fixed schema across versions; channels not present on a given board
 simply never emit rows and stay 0):
   ros_time_ns  -- ROS wall-clock time in nanoseconds (PC receipt time)
-  event_type   -- 'press' or 'release'
+  event_type   -- 'press', 'release', or 'sync' (initial/reconnection snapshot)
   channel      -- 'cut', 'coag', 'bipolar', or 'ligasure'
   source       -- 'surgeon', 'computer', or 'baseline'
   cut          -- cut state at time of event (0 or 1)
@@ -47,6 +47,8 @@ from datetime import datetime
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
+
+from pedal_controller.protocol import parse_state
 
 
 class PedalLogger(Node):
@@ -67,11 +69,11 @@ class PedalLogger(Node):
         log_dir = self.get_parameter('log_dir').get_parameter_value().string_value
         os.makedirs(log_dir, exist_ok=True)
 
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         log_path = os.path.join(log_dir, f'pedal_log_{timestamp}.csv')
 
         # -- CSV setup (fixed superset schema, so logs are comparable across boards) --
-        self._file = open(log_path, 'w', newline='')
+        self._file = open(log_path, 'x', newline='')
         self._writer = csv.writer(self._file)
         self._writer.writerow([
             'ros_time_ns', 'event_type', 'channel', 'source',
@@ -85,14 +87,9 @@ class PedalLogger(Node):
             Int32MultiArray, '/esu/activation_state', self._state_callback, 10)
 
         # -- State tracking --
-        # One last-state slot per possible channel, initialised to the known
-        # power-on state (all inactive) rather than None.
-        #
-        # Assuming all-zero at start is safe: firmware drives every relay LOW in
-        # setup(), so the board always boots with all channels inactive. This
-        # also means restarting the logger mid-session does not silently swallow
-        # a real activation the way seeding from None would.
-        self._last = {ch: 0 for ch in self.CHANNEL_ORDER}
+        # A late-joining logger does not know the board's present state.
+        # First observation is a snapshot, never an invented press/release.
+        self._last = None
 
         # Detected once from the first message, for a one-time info log.
         self._n_channels = None
@@ -116,22 +113,15 @@ class PedalLogger(Node):
 
     # -- State callback --
     def _state_callback(self, msg: Int32MultiArray):
-        data = [int(x) for x in msg.data]
-
-        # Need at least one channel + the trailing source field.
-        if len(data) < 2:
-            self.get_logger().warn(
-                f'Malformed state (need >= 2 fields): {data}')
+        try:
+            channel_values, source = parse_state(msg.data)
+        except ValueError as exc:
+            self.get_logger().warn(f'Malformed state: {exc}')
             return
-
-        n_channels = len(data) - 1          # last element is source
-        if n_channels > len(self.CHANNEL_ORDER):
-            self.get_logger().warn(
-                f'More channels ({n_channels}) than known ({len(self.CHANNEL_ORDER)}); '
-                'ignoring the extras. Update CHANNEL_ORDER for newer firmware.')
-            n_channels = len(self.CHANNEL_ORDER)
-
-        source = data[-1]
+        n_channels = len(channel_values)
+        if self._n_channels is not None and n_channels != self._n_channels:
+            self.get_logger().error('State schema changed; use one board per ROS domain and restart logger.')
+            return
 
         # One-time note about which board we're talking to.
         if self._n_channels is None:
@@ -143,15 +133,17 @@ class PedalLogger(Node):
         # Build the current full-width state dict (channels not present stay 0).
         states = {ch: 0 for ch in self.CHANNEL_ORDER}
         for i in range(n_channels):
-            states[self.CHANNEL_ORDER[i]] = data[i]
+            states[self.CHANNEL_ORDER[i]] = channel_values[i]
 
-        # A baseline mid-session while something was active = the ESP32 reset.
-        if source == 2 and any(self._last[ch] for ch in self.CHANNEL_ORDER):
-            active = {ch: self._last[ch] for ch in self.CHANNEL_ORDER if self._last[ch]}
+        if source == 2 and self._last is not None:
             self.get_logger().warn(
-                f'ESP32 baseline received while active ({active}). The board '
-                'restarted -- device reset, not an operator action. Dataset has '
-                'a discontinuity here.')
+                'Boot/reconnection baseline: dataset discontinuity; device reset is not proven.')
+
+        if self._last is None or source == 2:
+            for ch in self.CHANNEL_ORDER[:n_channels]:
+                self._emit_edge(ch, 'sync', source, states)
+            self._last = states
+            return
 
         # Emit an edge for every channel that changed.
         for ch in self.CHANNEL_ORDER[:n_channels]:

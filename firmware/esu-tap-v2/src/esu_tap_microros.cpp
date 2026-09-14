@@ -3,8 +3,8 @@
  *
  * micro-ROS firmware for the ESU-TAP v2 interposer on ESP32.
  *
- * REVIEW NOTE (2026-09-11): v3 LigaSure is not implemented. The current ROS
- * logger expects an incompatible legacy payload. Powered-offline forwarding
+ * REVIEW NOTE (2026-09-14): v3 has a separate four-channel firmware project.
+ * The ROS logger supports this v2 payload. Powered-offline forwarding
  * and independent watchdog activation shutdown are incomplete. See
  * docs/SAFETY_AND_VALIDATION.md. This note does not change firmware behavior.
  *
@@ -35,7 +35,7 @@
  *
  *   NOTE (breaking change from v1): the activation_state array is now FOUR
  *   elements [cut, coag, bipolar, source], not three. The ROS-side consumer
- *   (pedal_logger.py) must be updated to match.
+ *   (pedal_logger.py) supports both widths.
  *
  * Hardware (v2):
  *   Sensing: pedal dry contacts read DIRECTLY. Active-low, external 10k

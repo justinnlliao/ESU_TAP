@@ -8,7 +8,25 @@ track alongside the board they target.
 
 ---
 
-## [Unreleased] — Documentation and v3 CPL correction (2026-09-11)
+## [Unreleased] — Software review corrections (2026-09-14)
+
+- Refuse unavailable command channels instead of substituting CUT. Use one
+  executor thread; remove nested/concurrent spinning and bound the ON response
+  wait by the pulse's OFF-request deadline. Cleanup remains best-effort.
+- Add shared schema/response/observation helpers and offline regression tests.
+- Make mock and dummy-fixture tools revision-selectable, including LigaSure;
+  require explicit fixture confirmation for activating test procedures.
+- Timestamp state observations independently of response arrival, reject stale
+  matches, and abort benchmarks on failed acknowledgements or state transitions.
+- Log first/reconnection observations as sync records, reject malformed/changing
+  schemas, and avoid overwriting logs. Sync records are not training edge labels.
+- Update firmware paths, software contracts and limitation documentation;
+  align ROS package metadata at 2.0.0.
+- Firmware edits are comments only. No PCB, fabrication files, command lease,
+  offline policy, flashed board, or hardware safety behavior changed.
+- Offline checks do not replace actual ROS Humble integration or physical tests.
+
+## Documentation and v3 CPL correction (2026-09-11)
 
 - Corrected unsupported claims of guaranteed watchdog shutdown, sustained
   bypass, and powered-offline operation. See

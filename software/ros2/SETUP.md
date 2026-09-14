@@ -1,200 +1,115 @@
-# Build and run `pedal_controller` (ESU-TAP)
+# Build and run ESU-TAP software
 
-This is the PC-side ROS 2 package for the ESU-TAP foot pedal interposer.
-It talks to the ESP32, which runs micro-ROS firmware (`firmware/esp32/`)
-and connects over a **wired USB serial** link via the micro-ROS agent.
+Development target: ROS 2 Humble on Ubuntu 22.04, micro-ROS over USB serial.
+Use a disconnected low-voltage dummy contact fixture, not an operating generator.
+Read [protection and validation status](../../docs/SAFETY_AND_VALIDATION.md).
 
-## Current limitations — read before running
+## Select the revision
 
-These are development instructions for a disconnected low-voltage dummy contact
-fixture, not a clinical or generator acceptance procedure. See
-[protection and validation status](../../docs/SAFETY_AND_VALIDATION.md).
+| Board | Firmware project | Channels | State fields |
+| --- | --- | --- | --- |
+| v1 | No current standalone project | CUT, COAG | cut, coag, source |
+| v2 | firmware/esu-tap-v2 | Adds bipolar | cut, coag, bipolar, source |
+| v3 | firmware/esu-tap-v3 | Adds LigaSure | cut, coag, bipolar, ligasure, source |
 
-The current firmware supports CUT/COAG/bipolar and publishes four fields, while
-the logger, mock, and legacy two-channel tools expect the older interface. Do not
-rely on the current logger's source attribution. LigaSure firmware is unfinished.
-Powered operation without the ROS agent is not dependable; unpowered bypass is
-a separate intended hardware behavior requiring physical testing. Commands have
-no expiration if the commanding process dies but the agent remains alive.
+Do not flash a newer pin map onto v1. Commander discovers services; unavailable
+requested channels are errors, never replacements. Mock and bench tools require
+the selected `board_version` (default `v3`).
+The logger reads source from the final field and rejects a width change mid-run.
 
-Workspace layout:
+## Build ROS software
 
-    software/ros2/src/pedal_controller/
+Source the installed ROS environment in each terminal:
 
-## Architecture
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/ESU_TAP/software/ros2
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+source install/setup.bash
+```
 
-    ESP32 (esu_tap_node, micro-ROS)              PC (ROS 2 Humble)
-    ---------------------------------            --------------------------------
-    service server  /esu/cut   (SetBool) <-----  pedal_commander (service client)
-    service server  /esu/coag  (SetBool) <-----
-    service server  /esu/bipolar (SetBool) <--- (legacy commander needs updating)
-    publisher /esu/activation_state       ----->  pedal_logger (subscriber)
-       (Int32MultiArray [cut, coag, bipolar, source])
+Build from this workspace, not your home directory. Local `build/`, `install/`,
+and `log/` are ignored. No ROS runtime or hardware test was executed as part of
+the offline 2026-09-14 code update; use the [testing procedure](TESTING.md).
 
-The micro-ROS **agent** on the PC bridges the ESP32's USB serial to the ROS 2
-graph. It replaces the old custom serial bridge node.
+## Build firmware
 
-## 1. Install ROS 2 Humble
+Open the intended revision directory as the PlatformIO project root:
 
-Target distro is **ROS 2 Humble** (Ubuntu 22.04). On the lab Ubuntu machine it
-is already installed at `/opt/ros/humble`. Source it in every shell:
+```bash
+cd ~/ESU_TAP/firmware/esu-tap-v3  # substitute esu-tap-v2 for v2
+pio run
+# Optional disconnected-fixture upload to the identified board:
+pio run -t upload --upload-port /dev/ttyUSB0
+```
 
-    source /opt/ros/humble/setup.bash
+Configs name the lab symlink `/dev/esp32-esu`; override it when absent.
+On Windows use the actual `COM` port for upload, for example
+`pio run -t upload --upload-port COM5` only if COM5 is the identified board.
+Ubuntu is the documented micro-ROS build/run environment; Windows support for
+the entire dependency stack is not verified here.
 
-Confirm:
+Stop the serial agent/monitor before flashing: only one process may own the port.
+These projects use `micro_ros_platformio`, not `micro_ros_arduino`.
+After changing `colcon.meta`, run `pio run -t clean_microros` before rebuilding.
+The platform and micro-ROS dependency are currently unpinned; record actual
+versions/build hashes when validating a release.
 
-    ros2 --version
+## Run with one board
 
-## 2. Install the micro-ROS agent
+Only one board or mock, and one commanding application, may use these absolute
+`/esu/*` names in a ROS domain. Use an isolated domain for mock tests; do not
+run a mock alongside hardware advertising the same services.
 
-The agent is what connects the ESP32 to ROS 2. Easiest is the Docker image:
+Start the logger **before** connecting the board/agent so it can receive the
+boot/reconnection baseline. Publication is change-only; late subscribers may
+not see an initial state until something changes.
 
-    docker run -it --rm -v /dev:/dev --privileged --net=host \
-      microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
+In separate terminals, source ROS and this workspace, then run:
 
-Or build the agent from source (one-time) into a separate workspace:
+```bash
+# Logger:
+ros2 run pedal_controller pedal_logger
 
-    mkdir -p ~/uros_ws/src && cd ~/uros_ws
-    git clone -b humble https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
-    rosdep install --from-paths src --ignore-src -y
-    colcon build
-    source install/local_setup.bash
-    ros2 run micro_ros_setup create_agent_ws.sh
-    ros2 run micro_ros_setup build_agent.sh
-    source install/local_setup.bash
+# Serial agent:
+docker run -it --rm -v /dev:/dev --privileged --net=host \
+  microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
 
-Then run it with:
+# Commander:
+ros2 run pedal_controller pedal_commander
+```
 
-    ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
+Keys: `c` CUT, `g` COAG, `b` bipolar, `l` LigaSure (only if available).
+`x` requests OFF on every discovered channel; `s` shows last acknowledged
+commands, **not physical state**. Initially unknown channels first request OFF
+when toggled; a subsequent toggle requests ON. Bare ENTER uses `channel`.
 
-Find the ESP32 port with `ls /dev/ttyUSB* /dev/ttyACM*`. If you get a permission
-error, add yourself to the dialout group once: `sudo usermod -aG dialout $USER`
-(then log out and back in).
+```bash
+ros2 run pedal_controller pedal_commander --ros-args \
+  -p mode:=pulse -p channel:=ligasure -p pulse_ms:=300
+```
 
-## 3. Build this workspace
+Pulse timing schedules OFF relative to the ON request; it is not a guaranteed
+relay closure duration. Failed ON acknowledgement still triggers an OFF attempt.
+Script mode runs three such pulses separated by one-second waits. Abort on
+failed acknowledgement; do not infer safety from a timeout or an exit code.
 
-From the `software/ros2` folder (the parent of `src`):
+The executor spins in one background thread; input/service waits run on the
+main thread. Ctrl+C preserves the ROS context for best-effort OFF requests.
+Repeated interruption, process death, transport failure, or firmware faults can
+prevent OFF. The firmware has no command lease and an agent ping does not
+establish the command application's health.
 
-    source /opt/ros/humble/setup.bash
-    cd ~/ESU_TAP/software/ros2
-    colcon build
-    source install/setup.bash
+## Logger records
 
-> Build from `~/ESU_TAP/software/ros2`, NOT from your home directory. Running
-> `colcon build` in `~` dumps `build/ install/ log/` into your home folder
-> (colcon searches recursively and finds the package anyway). If that happens,
-> `rm -rf ~/build ~/install ~/log` and rebuild from the right place.
+Logs are written under `~/pedal_logs/` with unique, non-overwriting filenames.
+Columns remain `ros_time_ns,event_type,channel,source,cut,coag,bipolar,ligasure`.
+`event_type` now includes `sync` for first observation and reconnection baseline;
+exclude these from press/release training labels. A baseline is not proof of
+an ESP32 reset. Timestamps are PC ROS-clock receipt times, not physical/RF timing.
+Normal runs should use `use_sim_time=false`; simulated time requires its own clock.
 
-## 4. Run the system — the exact terminals
-
-The firmware **auto-connects and auto-reconnects**, so you do NOT need to press
-EN for normal reconnection. Boot-order and failure behavior still require
-testing; do not infer safety from the reconnection state machine.
-
-In every terminal below, first source both:
-
-    source /opt/ros/humble/setup.bash
-    source ~/ESU_TAP/software/ros2/install/setup.bash
-
-**Terminal 1 — micro-ROS agent** (bridges the ESP32 over USB serial). Docker is
-the supported path on `blue`:
-
-    docker run -it --rm -v /dev:/dev --privileged --net=host \
-      microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
-
-Within a second or two you should see `session established` and entities being
-created, WITHOUT pressing EN. If you restart the agent, the board reconnects on
-its own. (If the port is busy: `sudo fuser -k /dev/ttyUSB0`, then rerun.)
-
-**Terminal 2 — legacy logger** (currently suitable for the matching two-channel
-mock only; incompatible with current real-firmware source fields):
-
-    ros2 run pedal_controller pedal_logger
-
-**Terminal 3 — commander** (interactive keyboard console):
-
-    ros2 run pedal_controller pedal_commander
-
-    #   c  ENTER  -> toggle CUT
-    #   g  ENTER  -> toggle COAG
-    #   x  ENTER  -> request legacy CUT/COAG OFF (not an independent emergency stop)
-    #   s  ENTER  -> show state
-    #   h  ENTER  -> help
-
-Or drive the services directly, no commander needed:
-
-    ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: true}"
-    ros2 service call /esu/cut  std_srvs/srv/SetBool "{data: false}"
-    ros2 topic echo /esu/activation_state
-
-### Optional test / benchmark nodes (Terminal 3, in place of the commander)
-
-**Legacy interactive software test** — walks CUT/COAG and checks the old
-telemetry contract. It is not a v2/v3 system acceptance test:
-
-    ros2 run pedal_controller system_test
-
-**Automated latency benchmark** — toggles a channel N times, reports round-trip
-and command latency stats. Use a dummy contact fixture with the generator
-disconnected. Software timestamps do not measure physical relay release or RF:
-
-    ros2 run pedal_controller latency_test
-    ros2 run pedal_controller latency_test --ros-args -p iterations:=200 -p channel:=coag
-
-### Pre-hardware testing (no board)
-
-To exercise the ROS 2 stack without the ESP32, replace Terminal 1's agent with
-the mock node. See `TESTING.md`.
-
-    ros2 run pedal_controller mock_esu_node
-
-## 5. Flashing the ESP32 firmware
-
-The firmware lives in `firmware/esp32/`, built with **PlatformIO** (VS Code
-extension). Open the `firmware/esp32/` folder as the PlatformIO project root --
-not the repo root, or PlatformIO will not find `platformio.ini`.
-
-    firmware/esp32/
-      platformio.ini
-      src/esu_tap_microros.cpp
-
-Build and upload from the PlatformIO toolbar, or:
-
-    cd ~/ESU_TAP/firmware/esp32
-    pio run -t upload --upload-port /dev/ttyUSB0
-
-> `pio` is the VS Code extension's Core 6.x at `~/.platformio/penv/bin/pio`
-> (on PATH via `.bashrc`). `platformio.ini` names `/dev/esp32-esu`, but that
-> udev symlink is not resolving yet, so pass `--upload-port /dev/ttyUSB0`
-> explicitly for now.
-
-**Stop the agent before flashing** — `sudo fuser -k /dev/ttyUSB0` if you get
-"could not open port" or "multiple access on port". Only one thing (agent,
-flasher, or serial monitor) can own the port at a time; this is the cause of
-nearly every serial error.
-
-**If upload fails with "no serial data received":** hold BOOT, tap EN, release
-EN, keep holding BOOT until "Connecting..." becomes "Chip is ESP32...", release.
-
-**The first build is slow** (several minutes) -- `micro_ros_platformio` compiles
-the micro-ROS stack from source. Later builds are incremental. After editing
-`colcon.meta`, force a rebuild of the micro-ROS library: `pio run -t clean_microros`.
-
-**Library note:** this project uses `micro_ros_platformio`, NOT
-`micro_ros_arduino`. They expose different transport setup calls
-(`set_microros_serial_transports(Serial)` vs `set_microros_transports()`).
-Switching to the Arduino IDE means changing that call and the include.
-
-**Close the PlatformIO Serial Monitor before starting the agent** -- both want
-exclusive access to `/dev/ttyUSB0`, and the agent will sit silent if the monitor
-holds it.
-
-## Notes
-
-- Current firmware includes CUT/COAG/bipolar services; the legacy tools do not
-  establish complete three- or four-channel operation.
-- Current firmware puts source attribution in the fourth field. Legacy tools
-  reading the third field need correction. Baseline means boot or reconnection,
-  not necessarily a device reset, and inferred state is not measured RF output.
-- The workspace targets Ubuntu 22.04. Windows is possible but the agent and
-  serial ports differ; Ubuntu is the supported path.
+Status is inferred effective state (pedal OR command). Pedal changes masked by
+an existing computer command are not separate events in this interface.
+See [TESTING.md](TESTING.md) for revision-selectable mock and fixture commands.

@@ -1,120 +1,71 @@
 #!/usr/bin/env python3
+"""Revision-selectable ROS-only mock, NOT a hardware or watchdog model.
+
+Run on an isolated ROS_DOMAIN_ID; never alongside a real board in that domain.
+Commands and simulated pedal states are ORed, with change-only timer publishing.
 """
-mock_esu_node.py
 
-Software stand-in for the ESU-TAP ESP32 firmware, for testing the ROS 2 stack
-BEFORE the physical board arrives.
-
-It implements the legacy two-channel interface, not the current firmware's
-four-field CUT/COAG/bipolar/source contract:
-
-  SERVICES (hosted here, called by pedal_commander):
-    /esu/cut    (std_srvs/SetBool)  data=true -> CUT on,  false -> CUT off
-    /esu/coag   (std_srvs/SetBool)  data=true -> COAG on, false -> COAG off
-
-  TOPIC (published here, logged by pedal_logger):
-    /esu/activation_state  (std_msgs/Int32MultiArray)  [cut, coag, source]
-      source: 0 = surgeon, 1 = computer
-
-Mock behavior (not an exact firmware model):
-  - When a service is called, it drives the internal cut/coag state and
-    publishes a new activation_state with source=1 (computer).
-  - It also SIMULATES surgeon presses on a timer (source=0) so you can see the
-    logger attribute both sources correctly. Toggle with the 'sim_surgeon'
-    parameter.
-
-This is NOT flight code. It exists only so the real commander and real logger
-can be exercised end-to-end without hardware.
-
-KNOWN LIMITATION -- read before trusting a green test run:
-  This node publishes directly from its service callbacks. The firmware does
-  NOT; it has a single publish path in its timer callback. That difference
-  concealed a firmware bug (see docs/archive/ESU_TAP_v2_change_list.md 1.4)
-  in which computer-commanded activations were never published at all, because
-  the sense pins read the pedal contacts and a relay command does not move
-  them. This mock passed cleanly the whole time.
-
-  Treat a passing run here as evidence about the ROS 2 stack only -- the
-  topic/service contract, the commander, and the logger. It says nothing about
-  whether the firmware actually emits the events it should.
-
-Run:
-  ros2 run pedal_controller mock_esu_node
-  ros2 run pedal_controller mock_esu_node --ros-args -p sim_surgeon:=false
-"""
+import math
+import time
 
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import SetBool
 from std_msgs.msg import Int32MultiArray
 
+from pedal_controller.protocol import revision_channels, require_channel
+
 
 class MockEsuNode(Node):
     def __init__(self):
         super().__init__('mock_esu_node')
+        for name, default in (('board_version', 'v3'), ('sim_surgeon', False),
+                              ('sim_period_s', 5.0), ('sim_channel', 'cut')):
+            self.declare_parameter(name, default)
+        self.channels = revision_channels(self.get_parameter('board_version').value)
+        self.sim_channel = require_channel(self.get_parameter('sim_channel').value, self.channels)
+        self.period = float(self.get_parameter('sim_period_s').value)
+        if not math.isfinite(self.period) or self.period <= 0:
+            raise ValueError('sim_period_s must be positive and finite')
+        self.commands = dict.fromkeys(self.channels, 0)
+        self.sensed = dict.fromkeys(self.channels, 0)
+        self.previous_sensed = self.sensed.copy()
+        self.effective = self.sensed.copy()
+        self._baseline = True
+        self.last_sim = time.monotonic()
+        self.pub = self.create_publisher(Int32MultiArray, '/esu/activation_state', 10)
+        self._esu_services = [self.create_service(SetBool, f'/esu/{ch}', self._callback(ch))
+                         for ch in self.channels]
+        self.create_timer(0.01, self._tick)
+        self.get_logger().warn('SOFTWARE MOCK: isolate ROS_DOMAIN_ID from all real boards.')
 
-        # -- Parameters --
-        self.declare_parameter('sim_surgeon', True)      # periodically fake surgeon presses
-        self.declare_parameter('sim_period_s', 5.0)      # how often to fake one
-        self._sim_surgeon = self.get_parameter('sim_surgeon').get_parameter_value().bool_value
-        self._sim_period  = float(self.get_parameter('sim_period_s').get_parameter_value().double_value)
+    def _callback(self, channel):
+        def callback(request, response):
+            self.commands[channel] = int(request.data)
+            response.success = True
+            response.message = f'{channel} command accepted (mock)'
+            return response
+        return callback
 
-        # -- Internal "hardware" state --
-        self._cut = 0
-        self._coag = 0
-
-        # -- Publisher: activation status --
-        self._pub = self.create_publisher(Int32MultiArray, '/esu/activation_state', 10)
-
-        # -- Service servers (mimic the ESP32) --
-        self.create_service(SetBool, '/esu/cut',  self._on_cut)
-        self.create_service(SetBool, '/esu/coag', self._on_coag)
-
-        # -- Optional simulated surgeon presses --
-        if self._sim_surgeon:
-            self._sim_state = False
-            self.create_timer(self._sim_period, self._sim_surgeon_press)
-
-        # Publish an initial state so subscribers have a baseline
-        self._publish(source=0)
-
-        self.get_logger().info(
-            'Mock ESU node up. Services: /esu/cut, /esu/coag. '
-            'Publishing /esu/activation_state. '
-            f'Surgeon simulation: {"ON" if self._sim_surgeon else "OFF"}.'
-        )
-
-    # -- Publish helper --
-    def _publish(self, source: int):
+    def _publish(self, source):
         msg = Int32MultiArray()
-        msg.data = [self._cut, self._coag, source]
-        self._pub.publish(msg)
+        msg.data = [self.effective[ch] for ch in self.channels] + [source]
+        self.pub.publish(msg)
 
-    # -- Service callbacks (source = computer = 1) --
-    def _on_cut(self, request, response):
-        self._cut = 1 if request.data else 0
-        self._publish(source=1)
-        response.success = True
-        response.message = 'cut on' if request.data else 'cut off'
-        self.get_logger().info(f'[service] {response.message}')
-        return response
-
-    def _on_coag(self, request, response):
-        self._coag = 1 if request.data else 0
-        self._publish(source=1)
-        response.success = True
-        response.message = 'coag on' if request.data else 'coag off'
-        self.get_logger().info(f'[service] {response.message}')
-        return response
-
-    # -- Simulated surgeon press (source = surgeon = 0) --
-    def _sim_surgeon_press(self):
-        self._sim_state = not self._sim_state
-        self._cut = 1 if self._sim_state else 0
-        self._publish(source=0)
-        self.get_logger().info(
-            f'[sim surgeon] cut {"press" if self._sim_state else "release"}'
-        )
+    def _tick(self):
+        if self._baseline:
+            self._publish(2)
+            self._baseline = False
+        if (self.get_parameter('sim_surgeon').value
+                and time.monotonic() - self.last_sim >= self.period):
+            self.last_sim = time.monotonic()
+            self.sensed[self.sim_channel] ^= 1
+        for ch in self.channels:
+            effective = int(self.commands[ch] or self.sensed[ch])
+            if effective != self.effective[ch]:
+                self.effective[ch] = effective
+                self._publish(0 if self.sensed[ch] != self.previous_sensed[ch] else 1)
+        self.previous_sensed = self.sensed.copy()
 
 
 def main(args=None):

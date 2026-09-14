@@ -4,7 +4,7 @@ package_name = 'pedal_controller'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='2.0.0',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -25,8 +25,7 @@ setup(
             # Test-only: software stand-in for the ESP32, for use before the
             # hardware arrives. Not flight code.
             'mock_esu_node = pedal_controller.mock_esu_node:main',
-            # Interactive full-system acceptance test. Drives the real
-            # services and cross-checks published telemetry + attribution.
+            # Revision-selectable dummy-fixture checks, not safety acceptance.
             'system_test = pedal_controller.system_test:main',
             # Automated latency benchmark: round-trip and command latency
             # over many iterations, with statistics.

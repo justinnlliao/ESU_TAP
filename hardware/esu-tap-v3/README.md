@@ -7,9 +7,10 @@ KiCad 10.0.5. Local libraries use `${KIPRJMOD}` in the library tables.
 ## Current implementation
 
 LigaSure uses GPIO33 control, GPIO25 sense, and GPIO18 through R22 (680 ohm)
-to yellow indicator D12. The checked-in firmware does not yet implement this
-fourth function. The three-channel firmware and legacy ROS logger also disagree
-on the status-message format.
+to yellow indicator D12. `firmware/esu-tap-v3/` implements this fourth function;
+the ROS logger/commander and revision-selectable mock/bench tools support its
+five-field state message. Physical operation, generator compatibility, and fault
+recovery still require testing; software changes do not qualify the hardware.
 
 ## Protection limitations
 

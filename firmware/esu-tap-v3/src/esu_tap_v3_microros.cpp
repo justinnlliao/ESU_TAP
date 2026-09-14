@@ -5,7 +5,9 @@
  *
  * v3 adds the LIGASURE (vessel-seal) channel on top of the v2 three-channel
  * design (CUT, COAG, BIPOLAR). Same sense-then-forward architecture and same
- * watchdog-held bypass failsafe.
+ * watchdog-controlled bypass with incomplete fault recovery. No command lease
+ * or dependable powered-offline forwarding is implemented. See
+ * docs/SAFETY_AND_VALIDATION.md; this is not a fail-safe guarantee.
  *
  * The ESP32 is a ROS 2 node that connects to the micro-ROS agent on the PC over
  * a WIRED serial (USB) transport. USB carries the ROS link; the barrel jack
@@ -30,7 +32,7 @@
  *
  *   NOTE (breaking change from v2): activation_state is now FIVE elements
  *   [cut, coag, bipolar, ligasure, source], not four. The ROS-side consumer
- *   (pedal_logger.py) must be updated to match.
+ *   (pedal_logger.py) supports both widths.
  *
  * Hardware (v3), verified against esu_tap_v3 netlist:
  *   Sense (pedal dry contacts, direct read, active-low, external 10k pull-ups):
@@ -41,7 +43,9 @@
  *     CUT = IO23 (D9), COAG = IO22 (D10), BI = IO21 (D11), LIGA = IO18 (D12)
  *   Watchdog (TPS3823A-33, U10): WDI = IO14. EDGE-triggered -- must TOGGLE.
  *     Holding it high OR low past the ~1.6 s (0.9-2.5 s worst case) timeout
- *     trips RESET, dropping the bypass-relay coils into pass-through.
+ *     briefly asserts RESET, releasing bypass-relay coils. RESET is not wired
+ *     to ESP32 EN or an independent activation disable; sustained bypass and
+ *     stuck-activation cancellation are not guaranteed.
  *
  *   SENSE and CTRL are SEPARATE nets per channel: a relay command does NOT move
  *   the pedal contacts, so effective state = (sensed OR commanded).
@@ -418,8 +422,9 @@ void loop() {
       break;
 
     case AGENT_DISCONNECTED:
-      // Link lost: force all channels OFF (fail safe), tear down, re-wait.
-      // Keep petting -- a dropped agent is not a firmware hang.
+      // Link lost: request activation OFF, tear down, re-wait.
+      // Continued petting prevents dependable powered-offline manual fallback:
+      // pedal forwarding runs only with entities connected. Not a safety guarantee.
       digitalWrite(PIN_RELAY_CUT,  LOW);
       digitalWrite(PIN_RELAY_COAG, LOW);
       digitalWrite(PIN_RELAY_BI,   LOW);

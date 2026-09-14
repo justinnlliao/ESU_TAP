@@ -1,117 +1,105 @@
-# Testing the ESU-TAP ROS 2 stack (before the board arrives)
+# Software regressions and disconnected-fixture checks
 
-This document explains how to test the PC-side ROS 2 stack **without the
-physical ESP32 board**, using a software stand-in (`mock_esu_node`).
+These procedures do not establish functional safety, clinical suitability,
+generator compatibility, RF delivery timing, or numerical reliability.
+See [pending physical fault tests](../../docs/SAFETY_AND_VALIDATION.md).
+Do not attach an operating electrosurgical generator to these tests.
 
-The mock uses the legacy two-channel contract. It is not an exact model of
-current firmware, which publishes `[cut, coag, bipolar, source]`. The real logger
-still expects three fields. See [current limitations](../../docs/SAFETY_AND_VALIDATION.md).
-No passing result here establishes electrical safety, offline operation, or
-watchdog recovery. LigaSure software and fault-response tests remain incomplete.
+## 1. Offline regression tests (no ROS required)
 
-## What this tests
+From the repository root, with Python 3.10 or newer:
 
-The mock implements the legacy two-channel interface:
+```bash
+python -B -m unittest discover -s software/ros2/src/pedal_controller/test -v
+```
 
-- Hosts two legacy services: `/esu/cut`, `/esu/coag`
-  (`std_srvs/SetBool`)
-- Publishes `/esu/activation_state` (`std_msgs/Int32MultiArray`, `[cut, coag, source]`)
-- Fakes a surgeon press every few seconds so source attribution is visible
+The suite checks all three message schemas, invalid messages, unavailable-channel
+rejection, pulse cleanup/deadlines, response failures, fresh-state matching,
+receipt timestamps, logger synchronization, fixture gating, and mock behavior.
+Node classes use a minimal fake base: this does **not** validate rclpy execution,
+DDS, serial transport, firmware compilation, or electrical behavior.
 
-Running the **real** `pedal_commander` and **real** `pedal_logger` against the
-mock exercises that legacy interface contract. What it does NOT
-test is the hardware layer (relays, pedal sensing, generator, micro-ROS over
-real serial) — those need the board.
+## 2. Actual ROS mock integration (required separately)
 
-## Prerequisites
+Build/source the workspace as described in [SETUP.md](SETUP.md).
+In **every** mock-test terminal, use an isolated ROS domain unused by real boards:
 
-- ROS 2 Humble (Ubuntu 22.04). See `SETUP.md`.
-- Workspace built:
+```bash
+export ROS_DOMAIN_ID=73
+source /opt/ros/humble/setup.bash
+source ~/ESU_TAP/software/ros2/install/setup.bash
+```
 
-      source /opt/ros/humble/setup.bash
-      cd ~/ESU_TAP/software/ros2
-      colcon build
-      source install/setup.bash
+Start logger first, then the mock, then a client in separate terminals:
 
-## Run the three-terminal test
+```bash
+ros2 run pedal_controller pedal_logger
+ros2 run pedal_controller mock_esu_node --ros-args -p board_version:=v3
+ros2 run pedal_controller pedal_commander
+```
 
-Source ROS 2 and the workspace in **each** terminal first:
+The mock defaults to v3 with simulated pedals OFF. Repeat with `v2` and `v1`.
+It models per-channel pedal OR command and timer-driven, change-only publishing.
+It does not model debounce electronics, reconnect behavior, watchdogs or relays.
 
-    source /opt/ros/humble/setup.bash
-    source ~/ESU_TAP/software/ros2/install/setup.bash
+Checks:
 
-**Terminal 1 — mock ESP32:**
+1. Correct services exist; commander shows only available channels.
+2. Select unavailable LigaSure on a v2 mock: commander must reject, never send CUT ON.
+3. Pulse each supported channel; observe ON/OFF requests and logger edges without
+   artificial service timeouts. Pulse timing is PC request scheduling only.
+4. Ctrl+C during a command: verify best-effort OFF acknowledgement.
+5. Restart logger mid-session: first observation is `sync`, not an invented press.
+   An idle late subscriber may wait for a change; the firmware has no state query.
+6. Start a fresh mock with `-p sim_surgeon:=true -p sim_channel:=ligasure` on v3
+   to exercise that channel's simulated pedal edges (default period 5 seconds).
+7. Never run two mock/hardware service providers with these names in the same domain.
 
-    ros2 run pedal_controller mock_esu_node
+Automated mock timing check (no real board in this domain):
 
-**Terminal 2 — real logger** (writes CSV to `~/pedal_logs/`):
+```bash
+ros2 run pedal_controller latency_test --ros-args \
+  -p board_version:=v3 -p fixture_confirmed:=true \
+  -p channel:=ligasure -p iterations:=20 -p warmup:=2
+```
 
-    ros2 run pedal_controller pedal_logger
+`fixture_confirmed` confirms an isolated software mock OR a physically
+disconnected low-voltage dummy fixture, not generator permission.
+Repeat each channel on each revision. Missing services/wrong-width telemetry fail.
+The benchmark aborts on failed ON/OFF checks, not silently excluding bad trials.
 
-**Terminal 3 — real commander** (interactive: c=CUT, g=COAG, x=all off):
+Service-response and state-message timestamps are captured independently in
+their completion/receipt handlers using the PC monotonic clock. State can arrive
+before the response. The 10-ms firmware timer is a polling interval, not proof
+of a fixed RTT-plus-5-ms relationship. No physical/RF latency is measured.
 
-    ros2 run pedal_controller pedal_commander
+## 3. Actual board on a disconnected dummy fixture
 
-## What a passing test looks like
+Use the exact revision's firmware and one isolated real board; replace the mock
+with the serial agent. Release all pedals and stop other command clients.
 
-- Every ~5 s the logger prints a `[surgeon]` row (from the mock's simulated press)
-- When you toggle a channel in the commander, the logger prints a `[computer]` row
-- The commander prints the service acknowledgement (`CUT ON -> ok (cut on)`)
-- A CSV file appears in `~/pedal_logs/` with correct `source` values
+```bash
+ros2 run pedal_controller system_test --ros-args \
+  -p board_version:=v3 -p fixture_confirmed:=true
+```
 
-> NOTE: the mock publishes directly from its service callbacks; the real
-> firmware publishes from its timer. That difference once concealed a real
-> firmware bug (computer activations were never published). A green run here
-> validates the ROS 2 stack — the topic/service contract, commander, logger —
-> NOT the firmware's publish path. Always confirm on hardware too.
+The interactive test walks **all selected-revision channels**, checks fresh
+computer and pedal telemetry, and asks for independent contact measurements.
+It does not silently substitute CUT or accept an old snapshot. Use independent
+continuity measurements: relay clicks, LEDs and acknowledgements are insufficient.
+OFF at cleanup is best-effort and does not override a held physical pedal.
 
-## Quick checks without the commander
+Run latency testing separately only after contact behavior has been checked.
+Record the exact board/assembly, firmware/software commits, dependency versions,
+supplies, domain/serial settings, repetitions, instrumentation, traces and failures.
 
-    # call the service directly
-    ros2 service call /esu/cut std_srvs/srv/SetBool "{data: true}"
+## Outstanding safety work
 
-    # watch the status stream
-    ros2 topic echo /esu/activation_state
+Command expiration and powered-offline forwarding remain unimplemented; the
+external watchdog does not independently cancel activation or reset the ESP32.
+Define timeout, refresh and re-arm requirements before changing those behaviors.
+Validate supply loss, agent/transport/process loss, stalls, and stuck-contact/driver
+faults on a controlled dummy fixture. This software update does not resolve them.
 
-    # confirm the interfaces exist
-    ros2 service list | grep esu
-    ros2 topic list | grep esu
-
-## Mock parameters
-
-    # turn off the simulated surgeon presses
-    ros2 run pedal_controller mock_esu_node --ros-args -p sim_surgeon:=false
-
-    # change how often a fake surgeon press happens (seconds)
-    ros2 run pedal_controller mock_esu_node --ros-args -p sim_period_s:=2.0
-
-## When the board arrives
-
-Do not directly substitute current firmware and assume the old tests apply.
-First fix the schema mismatch and extend the tools for the target hardware.
-Keep the generator disconnected and use a low-voltage dummy contact fixture:
-
-1. Flash `firmware/esp32/src/esu_tap_microros.cpp` to the ESP32 with
-   PlatformIO (see `SETUP.md` §5).
-2. Start the micro-ROS agent instead of the mock node:
-
-       docker run -it --rm -v /dev:/dev --privileged --net=host \
-         microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200
-
-3. Run revision-compatible logger, commander, and tests only after they have
-   been updated. Compare inferred messages against independently measured
-   contact closures, not just relay clicks or service acknowledgements.
-
-## Physical fault testing still required
-
-The detailed pending procedure is in
-[Protection features and validation status](../../docs/SAFETY_AND_VALIDATION.md).
-Record results for total and individual supply losses, agent/transport loss,
-commanding-process death with the agent alive, sense faults, and controller
-stalls with every activation ON and OFF. Observe several watchdog cycles and
-measure actual contact release and manual-path continuity.
-
-Define acceptable timing and recovery/re-arm criteria before testing. Do not
-mark a test passed just because a watchdog pulse or temporary bypass occurred.
-No physical fault-test results or numerical reliability rating are established
-by this document.
+The 2026-09-14 update was tested offline only. Actual ROS Humble integration,
+target firmware builds and physical fault testing remain required.

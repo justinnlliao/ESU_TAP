@@ -11,11 +11,12 @@ fail-safe guarantee.
 ## Current status
 
 - v1: historical monopolar hardware.
-- v2: CUT, COAG, and bipolar hardware; the checked-in firmware targets this map.
+- v2: CUT, COAG, and bipolar hardware and a dedicated firmware project.
 - v3: adds a fourth hardware path labeled LigaSure. Reviewed using KiCad 10.
-  LigaSure firmware and generator-specific compatibility are not complete.
-- The current ROS logger still expects the old two-channel message and is
-  incompatible with the firmware's three-channel status payload.
+  Dedicated v3 firmware implements LigaSure; generator-specific compatibility
+  and physical fault-response validation remain incomplete.
+- ROS commander/logger support all three revision interfaces. Mock and bench
+  tools select a revision explicitly. See the testing guide for scope and limits.
 
 Read [Protection features and validation status](docs/SAFETY_AND_VALIDATION.md)
 before use. This prototype is not validated for clinical use. Passing KiCad
@@ -62,24 +63,30 @@ See [wiring evidence and required tests](docs/SAFETY_AND_VALIDATION.md) and
 | `/esu/cut` | `std_srvs/srv/SetBool` | Set/clear CUT command |
 | `/esu/coag` | `std_srvs/srv/SetBool` | Set/clear COAG command |
 | `/esu/bipolar` | `std_srvs/srv/SetBool` | Set/clear bipolar command |
+| `/esu/ligasure` | `std_srvs/srv/SetBool` | Set/clear LigaSure command (v3 only) |
 | `/esu/activation_state` | `std_msgs/msg/Int32MultiArray` | Inferred state stream |
 
-Current firmware publishes `[cut, coag, bipolar, source]`.
+v2 publishes `[cut, coag, bipolar, source]`; v3 publishes
+`[cut, coag, bipolar, ligasure, source]`. Legacy v1 uses `[cut, coag, source]`.
 Source is 0 for a sensed pedal edge, 1 for a computer-derived edge, and 2 for a
 boot/reconnection baseline. Baseline does not necessarily mean a device reset.
 
-The current logger reads `[cut, coag, source]` and can misread bipolar as source.
-Do not use its current output as validated attribution. LigaSure services and
-a coordinated four-channel message/consumer update are pending.
+The logger validates these schemas and reads source from the last field.
+First observations and reconnection baselines are logged as `sync`, not invented
+press/release events. Messages are change-only: a late subscriber can remain
+unsynchronized until the next event. Start the logger before connecting the board.
+Inferred effective-state edges do not capture every overlapping pedal/command action.
 
 ## Repository layout
 
 - [Hardware](hardware/README.md): revision-specific KiCad projects, local libraries,
   and `fabrication/` exports.
-- `firmware/esp32/`: PlatformIO project using `micro_ros_platformio`,
-  not `micro_ros_arduino`.
+- `firmware/esu-tap-v2/` and `firmware/esu-tap-v3/`: separate PlatformIO projects
+  using `micro_ros_platformio`, not `micro_ros_arduino`. No v1 firmware project
+  is currently included; do not flash a newer pin map onto v1.
 - [ROS setup](software/ros2/SETUP.md): build, serial-agent, and development commands.
-- [Testing](software/ros2/TESTING.md): legacy mock scope and required physical tests.
+- [Testing](software/ros2/TESTING.md): offline regressions, revision-selectable
+  mock and dummy-fixture checks, and required physical tests.
 - [Connector notes](docs/connector_documentation.md): wiring notes requiring
   per-assembly verification.
 - [Changelog](CHANGELOG.md): history and documentation corrections.
@@ -87,8 +94,8 @@ a coordinated four-channel message/consumer update are pending.
 ## Development quickstart
 
 Use a disconnected low-voltage dummy contact fixture, not an operating generator.
-Resolve the firmware/logger mismatch before treating test logs as valid.
-The checked-in firmware is not a complete v3 implementation.
+Use one board or mock per isolated ROS domain. Commands have no firmware lease;
+an acknowledgement and a clean software test are not physical safety validation.
 
 Build the ROS 2 Humble workspace on Ubuntu:
 
@@ -103,7 +110,7 @@ Build the firmware from its own directory. Upload only to the intended board
 with generator connections removed and the correct serial port selected:
 
 ```bash
-cd ~/ESU_TAP/firmware/esp32
+cd ~/ESU_TAP/firmware/esu-tap-v3  # use esu-tap-v2 for a v2 board
 pio run
 # Optional bench upload; replace with your actual port:
 pio run -t upload --upload-port /dev/ttyUSB0

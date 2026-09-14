@@ -18,14 +18,18 @@ Archived proposals are not current assembly or safety specifications.
 
 ## Software compatibility
 
-v3 hardware adds LigaSure, but checked-in firmware supports CUT/COAG/bipolar only.
-Coordinate the fourth service, message schema, logger, commander, mock, and tests.
-Use explicit hardware-revision selection rather than silently flashing a v3
-pin map onto older boards.
+Separate v2/v3 firmware, four-channel commander/logger support, and explicit
+revision selection in the mock/bench tests are implemented. v3 LigaSure uses
+GPIO33 control, GPIO25 sense, and GPIO18 LED through R22/D12.
 
-Current firmware publishes `[cut, coag, bipolar, source]`; the logger expects
-`[cut, coag, source]`. Correct and test this mismatch before relying on data.
-v3 LigaSure uses GPIO33 control, GPIO25 sense, and GPIO18 LED through R22/D12.
+- Run the updated tools under actual ROS 2 Humble and each firmware build.
+- Record physical channel/fault tests; offline regressions do not test ROS DDS,
+  micro-ROS serial, contact behavior, or watchdog recovery.
+- Define command timeout, refresh, and deliberate re-arm semantics before a
+  coordinated firmware/client lease implementation. No timing threshold is approved.
+- Add current-state synchronization/sequence identity for late subscribers.
+- Pin firmware dependencies after a reproducible target build is verified.
+- Retain revision selection; never flash a v3 pin map onto older boards.
 
 ## Power, signals, and interfaces
 
@@ -53,4 +57,4 @@ stronger claims but are not all implemented.
 
 Report test conditions, repetitions, failures, and response times. No system
 failure probability or clinical-use approval is established. Passing ERC/DRC or
-a legacy mock test cannot substitute for this evidence.
+a software mock test cannot substitute for this evidence.

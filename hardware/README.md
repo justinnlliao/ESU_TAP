@@ -10,7 +10,7 @@ through `${KIPRJMOD}` in its symbol and footprint tables.
 Read [protection and validation status](../docs/SAFETY_AND_VALIDATION.md).
 Manufacturing checks are not functional or clinical-use approval. The v3
 watchdog arrangement has an independent-shutdown/sustained-bypass gap, and the
-checked-in firmware is not a complete v3 implementation.
+four-channel firmware implementation has not been physically qualified.
 
 Revision-specific exports live in `fabrication/`. Use Gerbers, BOM, and CPL from
 the same saved design. Some generated files (including Gerbers, drill files,

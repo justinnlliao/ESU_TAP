@@ -1,8 +1,9 @@
 # Protection features and validation status
 
-Reviewed 2026-09-11. This page supersedes earlier claims that watchdog timeout
+Hardware reviewed 2026-09-11; software status updated 2026-09-14.
+This page supersedes earlier claims that watchdog timeout
 guarantees sustained manual bypass or cancels computer activation. This is a
-documentation correction, not a hardware or firmware fix.
+documentation of limitations, not evidence of a hardware or firmware safety fix.
 
 ## Scope and permitted claims
 
@@ -11,7 +12,7 @@ and passing KiCad checks do not establish system-level fault tolerance, clinical
 suitability, or a numerical reliability rating.
 
 The detailed wiring findings below apply to the saved v3 design reviewed on
-2026-09-11. The checked-in firmware targets v2. Do not transfer v3 findings or
+2026-09-11. Separate firmware projects target v2 and v3. Do not transfer v3 findings or
 historical v1 test claims to another revision or an already-built board without
 checking its exact board, firmware, and assembly configuration.
 
@@ -91,12 +92,23 @@ a held pedal. These examples are not an exhaustive fault analysis.
 
 ## Software and data limitations
 
-- `firmware/esp32/src/esu_tap_microros.cpp` implements CUT, COAG, and bipolar,
-  not LigaSure. v3 uses GPIO33 for LigaSure control, GPIO25 for sense, and GPIO18
-  through R22 (680 ohm) to D12 for its indicator.
-- Firmware publishes `[cut, coag, bipolar, source]`. The current logger reads
-  `[cut, coag, source]`, misreading bipolar as source. The legacy mock does not
-  validate the current firmware contract. Passing mock tests do not validate v2/v3.
+- `firmware/esu-tap-v2/` implements CUT, COAG, and bipolar. `firmware/esu-tap-v3/`
+  adds LigaSure using GPIO33 control, GPIO25 sense, and GPIO18 through R22
+  (680 ohm) to D12 for its indicator. No hardware timing/safety behavior was
+  changed in the 2026-09-14 software-tool update.
+- v2 publishes `[cut, coag, bipolar, source]`; v3 adds `ligasure` before source.
+  The logger validates all revision widths and treats the final field as source.
+  Initial/reconnection snapshots are `sync` records, not actual activation edges
+  or proof of a reset. Change-only publication cannot establish an idle late
+  subscriber's initial state; separate raw pedal/command streams are not implemented.
+- Commander refuses unavailable channels. One executor thread processes replies;
+  the calling thread waits without nested spinning. Pulse duration schedules an
+  OFF request from the ON-send deadline, not from acknowledgement. This does not
+  guarantee contact timing, successful OFF, or independent shutdown. On timeout,
+  local future cancellation does not retract a command already sent to firmware.
+- Mock and bench tools select v1/v2/v3. Bench checks require explicit fixture
+  confirmation. Isolate the ROS domain, with no other command clients. Software
+  mock/unit results are not physical acceptance or safety qualification.
 - Published state is inferred from sense inputs and commands, not measured
   relay-contact state or confirmed generator RF output. Source labels do not
   prove the generator actually delivered energy.

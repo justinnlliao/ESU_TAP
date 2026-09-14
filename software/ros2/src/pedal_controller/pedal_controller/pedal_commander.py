@@ -1,243 +1,160 @@
 #!/usr/bin/env python3
-"""
-pedal_commander.py
+"""Bench command client. Acknowledgement is not physical contact feedback.
 
-ROS 2 service CLIENT for the ESU-TAP micro-ROS node.
-
-VERSION-AGNOSTIC: works with v1, v2, and v3 boards. On startup it discovers
-which activation services the board actually advertises and only enables those
-channels:
-
-    /esu/cut       (all versions)
-    /esu/coag      (all versions)
-    /esu/bipolar   (v2, v3)
-    /esu/ligasure  (v3)
-
-Each is a std_srvs/SetBool: data=True -> channel ON, data=False -> channel OFF.
-Activation is a confirmed request/response, so we know the ESP32 acknowledged
-each command.
-
-SAFETY: an acknowledgement does not confirm contact closure or RF delivery.
-This client does not implement an independent emergency stop. If it dies after
-an ON while the agent stays alive, the firmware command can persist. Use a
-disconnected dummy-contact fixture for testing; see
-docs/SAFETY_AND_VALIDATION.md.
-
-Modes:
-  interactive : keyboard-driven (a key toggles a channel on/off)
-  pulse       : call ON, wait pulse_ms, call OFF (single shot)
-  script      : run a list of timed (delay, action) calls
-
-Run:
-  ros2 run pedal_controller pedal_commander
-  ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=500 -p channel:=bipolar
+An ON can persist if this process dies while the agent remains alive. OFF on
+exit is best-effort, not an emergency stop. Use a disconnected dummy fixture.
 """
 
+import math
 import threading
 import time
 
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.signals import SignalHandlerOptions
 from std_srvs.srv import SetBool
 
+from pedal_controller.protocol import CHANNELS, require_channel
+from pedal_controller.service_calls import call_service
 
-# All channels this commander knows how to drive, and their service names.
-ALL_CHANNELS = {
-    'cut':      '/esu/cut',
-    'coag':     '/esu/coag',
-    'bipolar':  '/esu/bipolar',
-    'ligasure': '/esu/ligasure',
-}
-
-# Single-key shortcuts for interactive mode. 'c' is cut; coag uses 'g' since
-# 'c' is taken; bipolar 'b'; ligasure 'l'.
-CHANNEL_KEYS = {'c': 'cut', 'g': 'coag', 'b': 'bipolar', 'l': 'ligasure'}
+CHANNEL_KEYS = dict(zip(('c', 'g', 'b', 'l'), CHANNELS))
 
 
 class PedalCommander(Node):
     def __init__(self):
         super().__init__('pedal_commander')
-
-        # -- Parameters --
-        self.declare_parameter('mode', 'interactive')   # interactive | pulse | script
-        self.declare_parameter('pulse_ms', 300)
-        self.declare_parameter('channel', 'cut')         # default channel
-        self.declare_parameter('wait_timeout_s', 2.0)    # service-call timeout
-        # How long to wait for each service to appear before deciding the board
-        # doesn't have that channel.
-        self.declare_parameter('discover_timeout_s', 3.0)
-
-        self._mode     = self.get_parameter('mode').get_parameter_value().string_value
-        self._pulse_ms = self.get_parameter('pulse_ms').get_parameter_value().integer_value
-        self._channel  = self.get_parameter('channel').get_parameter_value().string_value.strip().lower()
-        self._timeout  = float(self.get_parameter('wait_timeout_s').get_parameter_value().double_value)
-        self._discover = float(self.get_parameter('discover_timeout_s').get_parameter_value().double_value)
-
-        # -- Discover which channels this board actually offers --
-        # cut and coag are required (present on every version). The others are
-        # optional; a board that doesn't advertise them is simply an older rev.
-        #
-        # NOTE: this dict must NOT be named self._clients -- rclpy's Node base
-        # class already owns self._clients (a list it appends to in
-        # create_client). Shadowing it breaks client creation.
+        for name, default in (('mode', 'interactive'), ('pulse_ms', 300),
+                              ('channel', 'cut'), ('wait_timeout_s', 2.0),
+                              ('discover_timeout_s', 3.0)):
+            self.declare_parameter(name, default)
+        self._mode = self.get_parameter('mode').value
+        self._pulse_ms = self.get_parameter('pulse_ms').value
+        self._channel = self.get_parameter('channel').value.strip().lower()
+        self._timeout = float(self.get_parameter('wait_timeout_s').value)
+        self._discover = float(self.get_parameter('discover_timeout_s').value)
         self._esu_clients = {}
-        self.get_logger().info('Discovering ESU-TAP services...')
-        for ch, srv in ALL_CHANNELS.items():
-            cli = self.create_client(SetBool, srv)
-            if cli.wait_for_service(timeout_sec=self._discover):
-                self._esu_clients[ch] = cli
-                self.get_logger().info(f'  found {srv}')
+
+    def prepare(self):
+        """Validate everything before any activation request is sent."""
+        if self._mode not in ('interactive', 'pulse', 'script'):
+            raise ValueError('mode must be interactive, pulse, or script')
+        if any(not math.isfinite(v) or v <= 0
+               for v in (self._timeout, self._discover, self._pulse_ms)):
+            raise ValueError('Pulse and timeout settings must be finite and positive')
+        require_channel(self._channel, CHANNELS)
+        for channel in CHANNELS:
+            client = self.create_client(SetBool, f'/esu/{channel}')
+            if client.wait_for_service(timeout_sec=self._discover):
+                self._esu_clients[channel] = client
             else:
-                # Not on this board. Required channels missing is an error.
-                if ch in ('cut', 'coag'):
-                    self.get_logger().error(
-                        f'Required service {srv} not found. Is the agent running '
-                        'and the board flashed?')
-                    raise SystemExit(2)
-                self.get_logger().info(f'  {srv} not present (older board rev)')
+                self.destroy_client(client)
+        require_channel(self._channel, self._esu_clients)
+        for required in ('cut', 'coag'):
+            require_channel(required, self._esu_clients)
+        self.get_logger().info(f'Available channels: {list(self._esu_clients)}')
 
-        board = {2: 'v1', 3: 'v2', 4: 'v3'}.get(len(self._esu_clients), f'{len(self._esu_clients)}-channel')
-        self.get_logger().info(
-            f'Connected to {board} board. Channels: {sorted(self._esu_clients)}')
-
-        # Fall back the default channel if the requested one isn't available.
-        if self._channel not in self._esu_clients:
-            self.get_logger().warn(
-                f'Channel [{self._channel}] not available on this board; '
-                'defaulting to [cut].')
-            self._channel = 'cut'
-
-        # -- Launch mode --
-        if self._mode == 'interactive':
-            threading.Thread(target=self._interactive_loop, daemon=True).start()
-        elif self._mode == 'pulse':
-            self.create_timer(1.0, self._pulse_once)
-        elif self._mode == 'script':
-            self._script = [
-                (1.0, 'press'), (0.5, 'release'),
-                (2.0, 'press'), (0.5, 'release'),
-                (1.5, 'press'), (0.5, 'release'),
-            ]
-            threading.Thread(target=self._run_script, daemon=True).start()
+    def _call(self, channel, activate, timeout=None):
+        require_channel(channel, self._esu_clients)
+        request = SetBool.Request()
+        request.data = activate
+        result = call_service(self._esu_clients[channel], request,
+                              self._timeout if timeout is None else timeout)
+        message = f'{channel.upper()} {"ON" if activate else "OFF"}: {result.message}'
+        if result.success:
+            self.get_logger().info(message)
         else:
-            self.get_logger().error(f'Unknown mode: {self._mode}')
-            raise SystemExit(2)
+            self.get_logger().error(message)
+        return result.success
 
-    # -- Service call helper --
-    def _call(self, channel: str, activate: bool):
-        """Call the SetBool service for a channel and log the acknowledgement."""
-        client = self._esu_clients.get(channel)
-        if client is None:
-            self.get_logger().warn(f'{channel} not available on this board.')
-            return False
+    def all_off(self):
+        # Do not short-circuit: attempt every channel even if one fails.
+        results = [self._call(ch, False) for ch in self._esu_clients]
+        return all(results)
 
-        req = SetBool.Request()
-        req.data = activate
+    def _pulse_once(self):
+        # Deadline starts before ON; waiting for ACK must not add a full service
+        # timeout to the requested pulse. This is PC request timing, not a
+        # guaranteed contact-closure duration or independent watchdog.
+        duration = self._pulse_ms / 1000.0
+        deadline = time.monotonic() + duration
+        on_ok = False
+        off_ok = False
+        try:
+            on_ok = self._call(self._channel, True, min(self._timeout, duration))
+            if on_ok:
+                time.sleep(max(0.0, deadline - time.monotonic()))
+        finally:
+            off_ok = self._call(self._channel, False)
+        return on_ok and off_ok
 
-        future = client.call_async(req)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=self._timeout)
-
-        if future.done() and future.result() is not None:
-            res = future.result()
-            state = 'ON' if activate else 'OFF'
-            ack = 'ok' if res.success else 'FAILED'
-            self.get_logger().info(f'{channel.upper()} {state} -> {ack} ({res.message})')
-            return res.success
-        else:
-            self.get_logger().error(
-                f'{channel.upper()} {"ON" if activate else "OFF"} -> no response (timeout)')
-            return False
-
-    def press(self):
-        self._call(self._channel, True)
-
-    def release(self):
-        self._call(self._channel, False)
-
-    # -- Interactive mode --
     def _interactive_loop(self):
-        # Independent on/off state per available channel.
-        state = {ch: False for ch in self._esu_clients}
-
-        # Only show keys for channels this board has.
-        active_keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in self._esu_clients}
-
-        def show_help():
-            print('\n=== Pedal Commander (interactive, service client) ===')
-            for k, ch in active_keys.items():
-                print(f'  {k}  ENTER  -> toggle {ch.upper()}')
-            print('  x  ENTER  -> all OFF (safety)')
-            print('  s  ENTER  -> show current state')
-            print('  h  ENTER  -> help')
-            print('  Ctrl+C    -> quit (deactivates everything)\n')
-            print(f'  Tip: bare ENTER toggles the default channel ({self._channel}).\n')
-
-        def toggle(channel):
-            new = not state[channel]
-            if self._call(channel, new):
-                state[channel] = new
-
-        def report():
-            print('   state: ' + '  '.join(
-                f'{ch.upper()}={"ON" if state[ch] else "off"}' for ch in self._esu_clients))
-
-        show_help()
+        # Unknown until acknowledged; never present a local guess as feedback.
+        state = dict.fromkeys(self._esu_clients)
+        keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in state}
+        print(f'Keys: {keys}; x=OFF requests; s=last acknowledged commands; Ctrl+C=quit')
+        print('Unknown state: first toggle requests OFF. This is not contact feedback.')
         while True:
             raw = input('> ').strip().lower()
-
-            if raw in active_keys:
-                toggle(active_keys[raw])
-            elif raw in self._esu_clients:            # full channel name typed
-                toggle(raw)
-            elif raw in ('x', 'off', 'stop'):
-                for ch in self._esu_clients:
-                    self._call(ch, False)
-                    state[ch] = False
+            if raw in ('x', 'off', 'stop'):
+                for ch in state:
+                    state[ch] = False if self._call(ch, False) else None
             elif raw in ('s', 'state'):
-                report()
-            elif raw in ('h', 'help', '?'):
-                show_help()
-            elif raw == '':
-                toggle(self._channel)
+                print(state)
             else:
-                print(f'   unknown: {raw!r}  (h for help)')
+                ch = self._channel if not raw else keys.get(raw, raw)
+                if ch not in state:
+                    print('Unknown/unavailable channel; no request sent.')
+                    continue
+                target = state[ch] is False
+                if self._call(ch, target):
+                    state[ch] = target
+                else:
+                    state[ch] = None
+                    if target:
+                        # A failed ON acknowledgement does not prove ON failed.
+                        self._call(ch, False)
 
-    # -- Pulse mode --
-    def _pulse_once(self):
-        self.press()
-        time.sleep(self._pulse_ms / 1000.0)
-        self.release()
-        self.get_logger().info(f'Pulse complete ({self._pulse_ms} ms) on {self._channel}')
-        raise SystemExit
-
-    # -- Script mode --
-    def _run_script(self):
-        self.get_logger().info(f'Running script ({len(self._script)} steps)...')
-        for delay_s, action in self._script:
-            time.sleep(delay_s)
-            if action == 'press':
-                self.press()
-            elif action == 'release':
-                self.release()
-        self.get_logger().info('Script complete.')
+    def run(self):
+        if self._mode == 'interactive':
+            self._interactive_loop()
+            return True
+        if self._mode == 'pulse':
+            return self._pulse_once()
+        for _ in range(3):
+            time.sleep(1.0)
+            if not self._pulse_once():
+                return False
+        return True
 
 
 def main(args=None):
-    rclpy.init(args=args)
+    # Keep the ROS context alive on Ctrl+C long enough to attempt OFF responses.
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = PedalCommander()
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+    worker = threading.Thread(target=executor.spin, daemon=True)
+    worker.start()
+    ok = False
     try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, SystemExit):
-        pass
+        node.prepare()
+        ok = node.run()
+    except (KeyboardInterrupt, EOFError):
+        print('Stopping; requesting OFF on discovered channels.')
+    except Exception as exc:
+        node.get_logger().error(str(exc))
     finally:
         try:
-            # Safety: deactivate every channel this board has on exit.
-            for ch in node._esu_clients:
-                node._call(ch, False)
-        except Exception:
-            pass
-        node.destroy_node()
-        rclpy.shutdown()
+            if not node.all_off():
+                ok = False
+                node.get_logger().error('OFF not confirmed. Verify fixture contacts independently.')
+        finally:
+            executor.shutdown()
+            worker.join(timeout=2.0)
+            node.destroy_node()
+            rclpy.shutdown()
+    raise SystemExit(0 if ok else 1)
 
 
 if __name__ == '__main__':
