@@ -2,41 +2,42 @@
 """
 pedal_logger.py
 
-REVIEW NOTE (2026-09-11): this legacy reader expects three fields. Current
-firmware publishes [cut, coag, bipolar, source], so this reader misattributes
-source. Do not treat its output as validated current-firmware data. This is a
-documentation warning, not a schema fix. See docs/SAFETY_AND_VALIDATION.md.
-
 ROS 2 node -- logs ESU activation/deactivation events to CSV for imitation
 learning data collection.
 
-Subscribes to the status topic published by the ESU-TAP micro-ROS node:
+VERSION-AGNOSTIC: works with v1, v2, and v3 boards. It detects the channel
+count from the length of each /esu/activation_state message and logs whatever
+channels are present. The source code is always the LAST element.
 
     /esu/activation_state  (std_msgs/msg/Int32MultiArray)
-        data = [cut, coag, source]
-          cut    : 0/1 current EFFECTIVE CUT active state
-          coag   : 0/1 current EFFECTIVE COAG active state
-          source : 0 = surgeon, 1 = computer, 2 = baseline
-                   (attributed on the ESP32)
+        v1: [cut, coag, source]                      (3 elements)
+        v2: [cut, coag, bipolar, source]             (4 elements)
+        v3: [cut, coag, bipolar, ligasure, source]   (5 elements)
+          each channel : 0/1 current EFFECTIVE active state
+          source       : 0 = surgeon, 1 = computer, 2 = baseline
+                         (attributed on the ESP32)
 
 The ESP32 attributes source deterministically: a change in the debounced
 sensed line is ground truth for a surgeon action; otherwise the computer drove
-it. The logger just records what it receives. This is more reliable than
-inferring source on the PC, because the ESP32 sees the command and the sensed
-edge with no transport latency between them.
+it. The logger records what it receives. This is more reliable than inferring
+source on the PC, because the ESP32 sees the command and the sensed edge with
+no transport latency between them.
 
-source = 2 (baseline) is the ESP32's boot-time sync message, not a real
-activation. Current firmware also publishes it on reconnection, so it does not
-by itself prove an ESP32 restart. The legacy warning below needs updating along
-with the message schema; do not infer device-reset events solely from baseline.
+source = 2 (baseline) is the ESP32's boot-time / reconnection sync message, not
+a real activation. It does not by itself prove an ESP32 restart, but a baseline
+received WHILE a channel was active does indicate a mid-session reset (logged as
+a warning, since the dataset has a discontinuity there).
 
-CSV columns:
+CSV columns (fixed schema across versions; channels not present on a given board
+simply never emit rows and stay 0):
   ros_time_ns  -- ROS wall-clock time in nanoseconds (PC receipt time)
   event_type   -- 'press' or 'release'
-  channel      -- 'cut' or 'coag'
+  channel      -- 'cut', 'coag', 'bipolar', or 'ligasure'
   source       -- 'surgeon', 'computer', or 'baseline'
   cut          -- cut state at time of event (0 or 1)
   coag         -- coag state at time of event (0 or 1)
+  bipolar      -- bipolar state (0 or 1; always 0 on v1)
+  ligasure     -- ligasure state (0 or 1; always 0 on v1/v2)
 """
 
 import csv
@@ -50,9 +51,13 @@ from std_msgs.msg import Int32MultiArray
 
 class PedalLogger(Node):
 
-    # Source codes as published in field 2 of /esu/activation_state.
-    # Must stay in sync with SRC_* in firmware/esp32/src/esu_tap_microros.cpp.
+    # Source codes as published in the LAST field of /esu/activation_state.
+    # Must stay in sync with SRC_* in the firmware.
     SOURCE_NAMES = {0: 'surgeon', 1: 'computer', 2: 'baseline'}
+
+    # Channel names in array order (excluding the trailing source field).
+    # A v1 message carries the first 2, v2 the first 3, v3 all 4.
+    CHANNEL_ORDER = ['cut', 'coag', 'bipolar', 'ligasure']
 
     def __init__(self):
         super().__init__('pedal_logger')
@@ -65,11 +70,12 @@ class PedalLogger(Node):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         log_path = os.path.join(log_dir, f'pedal_log_{timestamp}.csv')
 
-        # -- CSV setup --
+        # -- CSV setup (fixed superset schema, so logs are comparable across boards) --
         self._file = open(log_path, 'w', newline='')
         self._writer = csv.writer(self._file)
         self._writer.writerow([
-            'ros_time_ns', 'event_type', 'channel', 'source', 'cut', 'coag'
+            'ros_time_ns', 'event_type', 'channel', 'source',
+            'cut', 'coag', 'bipolar', 'ligasure'
         ])
         self._file.flush()
         self.get_logger().info(f'Logging to {log_path}')
@@ -79,57 +85,80 @@ class PedalLogger(Node):
             Int32MultiArray, '/esu/activation_state', self._state_callback, 10)
 
         # -- State tracking --
-        # Initialised to the known power-on state (both channels inactive)
-        # rather than to None.
+        # One last-state slot per possible channel, initialised to the known
+        # power-on state (all inactive) rather than None.
         #
-        # Previously this was None and the first message was consumed purely to
-        # seed the edge detector, emitting nothing. That silently swallowed one
-        # real activation whenever the logger started after the ESP32 -- e.g.
-        # restarting the logger mid-session. Assuming (0, 0) is safe: the
-        # firmware drives both relays LOW in setup(), so the board always boots
-        # with both channels inactive.
-        self._last_cut = 0
-        self._last_coag = 0
+        # Assuming all-zero at start is safe: firmware drives every relay LOW in
+        # setup(), so the board always boots with all channels inactive. This
+        # also means restarting the logger mid-session does not silently swallow
+        # a real activation the way seeding from None would.
+        self._last = {ch: 0 for ch in self.CHANNEL_ORDER}
 
-        self.get_logger().info('Pedal logger ready.')
+        # Detected once from the first message, for a one-time info log.
+        self._n_channels = None
+
+        self.get_logger().info('Pedal logger ready (version-agnostic).')
 
     # -- Edge emission --
-    def _emit_edge(self, channel, edge_action, source, cut, coag):
+    def _emit_edge(self, channel, edge_action, source, states):
         ros_now_ns = self.get_clock().now().nanoseconds
         src_str = self.SOURCE_NAMES.get(source, f'unknown({source})')
         self._writer.writerow([
-            ros_now_ns, edge_action, channel, src_str, cut, coag
+            ros_now_ns, edge_action, channel, src_str,
+            states['cut'], states['coag'], states['bipolar'], states['ligasure']
         ])
         self._file.flush()
         self.get_logger().info(
             f'[{src_str}] {channel} {edge_action} @ {ros_now_ns} ns '
-            f'(cut={cut}, coag={coag})'
+            f'(cut={states["cut"]}, coag={states["coag"]}, '
+            f'bipolar={states["bipolar"]}, ligasure={states["ligasure"]})'
         )
 
     # -- State callback --
     def _state_callback(self, msg: Int32MultiArray):
-        if len(msg.data) < 3:
-            self.get_logger().warn(f'Malformed state (need 3 fields): {list(msg.data)}')
-            return
-        cut, coag, source = int(msg.data[0]), int(msg.data[1]), int(msg.data[2])
+        data = [int(x) for x in msg.data]
 
-        # A baseline message mid-session means the ESP32 restarted. Warn loudly:
-        # any activation that was in progress across the reset is unrecoverable,
-        # and the operator needs to know the dataset has a discontinuity here.
-        if source == 2 and (self._last_cut or self._last_coag):
+        # Need at least one channel + the trailing source field.
+        if len(data) < 2:
             self.get_logger().warn(
-                'ESP32 baseline received while a channel was active '
-                f'(cut={self._last_cut}, coag={self._last_coag}). The board '
-                'restarted -- this is a device reset, not an operator action. '
-                'Data has a discontinuity here.'
-            )
+                f'Malformed state (need >= 2 fields): {data}')
+            return
 
-        if cut != self._last_cut:
-            self._emit_edge('cut', 'press' if cut == 1 else 'release', source, cut, coag)
-            self._last_cut = cut
-        if coag != self._last_coag:
-            self._emit_edge('coag', 'press' if coag == 1 else 'release', source, cut, coag)
-            self._last_coag = coag
+        n_channels = len(data) - 1          # last element is source
+        if n_channels > len(self.CHANNEL_ORDER):
+            self.get_logger().warn(
+                f'More channels ({n_channels}) than known ({len(self.CHANNEL_ORDER)}); '
+                'ignoring the extras. Update CHANNEL_ORDER for newer firmware.')
+            n_channels = len(self.CHANNEL_ORDER)
+
+        source = data[-1]
+
+        # One-time note about which board we're talking to.
+        if self._n_channels is None:
+            self._n_channels = n_channels
+            board = {2: 'v1 (mono)', 3: 'v2 (mono+bipolar)',
+                     4: 'v3 (mono+bipolar+ligasure)'}.get(n_channels, f'{n_channels}-channel')
+            self.get_logger().info(f'Detected {board} firmware ({n_channels} channels).')
+
+        # Build the current full-width state dict (channels not present stay 0).
+        states = {ch: 0 for ch in self.CHANNEL_ORDER}
+        for i in range(n_channels):
+            states[self.CHANNEL_ORDER[i]] = data[i]
+
+        # A baseline mid-session while something was active = the ESP32 reset.
+        if source == 2 and any(self._last[ch] for ch in self.CHANNEL_ORDER):
+            active = {ch: self._last[ch] for ch in self.CHANNEL_ORDER if self._last[ch]}
+            self.get_logger().warn(
+                f'ESP32 baseline received while active ({active}). The board '
+                'restarted -- device reset, not an operator action. Dataset has '
+                'a discontinuity here.')
+
+        # Emit an edge for every channel that changed.
+        for ch in self.CHANNEL_ORDER[:n_channels]:
+            if states[ch] != self._last[ch]:
+                action = 'press' if states[ch] == 1 else 'release'
+                self._emit_edge(ch, action, source, states)
+                self._last[ch] = states[ch]
 
     def destroy_node(self):
         self._file.close()

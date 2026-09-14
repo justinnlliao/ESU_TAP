@@ -4,27 +4,33 @@ pedal_commander.py
 
 ROS 2 service CLIENT for the ESU-TAP micro-ROS node.
 
-This legacy client uses two std_srvs/SetBool services:
-    /esu/cut    data=True -> CUT on,   data=False -> CUT off
-    /esu/coag   data=True -> COAG on,  data=False -> COAG off
+VERSION-AGNOSTIC: works with v1, v2, and v3 boards. On startup it discovers
+which activation services the board actually advertises and only enables those
+channels:
 
-This node calls those services. It replaces the old topic-publishing
-commander: activation is now a confirmed request/response, so we know the
-ESP32 acknowledged each command.
+    /esu/cut       (all versions)
+    /esu/coag      (all versions)
+    /esu/bipolar   (v2, v3)
+    /esu/ligasure  (v3)
 
-An acknowledgement does not confirm contact closure or RF delivery. This client
-does not implement bipolar/LigaSure or an independent emergency stop. If it dies
-after ON while the agent stays alive, the current firmware command can persist.
-Use a disconnected dummy contact fixture; see docs/SAFETY_AND_VALIDATION.md.
+Each is a std_srvs/SetBool: data=True -> channel ON, data=False -> channel OFF.
+Activation is a confirmed request/response, so we know the ESP32 acknowledged
+each command.
+
+SAFETY: an acknowledgement does not confirm contact closure or RF delivery.
+This client does not implement an independent emergency stop. If it dies after
+an ON while the agent stays alive, the firmware command can persist. Use a
+disconnected dummy-contact fixture for testing; see
+docs/SAFETY_AND_VALIDATION.md.
 
 Modes:
-  interactive : keyboard-driven (ENTER toggles on/off)
+  interactive : keyboard-driven (a key toggles a channel on/off)
   pulse       : call ON, wait pulse_ms, call OFF (single shot)
   script      : run a list of timed (delay, action) calls
 
 Run:
   ros2 run pedal_controller pedal_commander
-  ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=500 -p channel:=cut
+  ros2 run pedal_controller pedal_commander --ros-args -p mode:=pulse -p pulse_ms:=500 -p channel:=bipolar
 """
 
 import threading
@@ -35,6 +41,19 @@ from rclpy.node import Node
 from std_srvs.srv import SetBool
 
 
+# All channels this commander knows how to drive, and their service names.
+ALL_CHANNELS = {
+    'cut':      '/esu/cut',
+    'coag':     '/esu/coag',
+    'bipolar':  '/esu/bipolar',
+    'ligasure': '/esu/ligasure',
+}
+
+# Single-key shortcuts for interactive mode. 'c' is cut; coag uses 'g' since
+# 'c' is taken; bipolar 'b'; ligasure 'l'.
+CHANNEL_KEYS = {'c': 'cut', 'g': 'coag', 'b': 'bipolar', 'l': 'ligasure'}
+
+
 class PedalCommander(Node):
     def __init__(self):
         super().__init__('pedal_commander')
@@ -42,28 +61,47 @@ class PedalCommander(Node):
         # -- Parameters --
         self.declare_parameter('mode', 'interactive')   # interactive | pulse | script
         self.declare_parameter('pulse_ms', 300)
-        self.declare_parameter('channel', 'cut')         # cut | coag
+        self.declare_parameter('channel', 'cut')         # default channel
         self.declare_parameter('wait_timeout_s', 2.0)    # service-call timeout
+        # How long to wait for each service to appear before deciding the board
+        # doesn't have that channel.
+        self.declare_parameter('discover_timeout_s', 3.0)
 
         self._mode     = self.get_parameter('mode').get_parameter_value().string_value
         self._pulse_ms = self.get_parameter('pulse_ms').get_parameter_value().integer_value
         self._channel  = self.get_parameter('channel').get_parameter_value().string_value.strip().lower()
         self._timeout  = float(self.get_parameter('wait_timeout_s').get_parameter_value().double_value)
+        self._discover = float(self.get_parameter('discover_timeout_s').get_parameter_value().double_value)
 
-        if self._channel not in ('cut', 'coag'):
-            self.get_logger().warn(f'Unknown channel [{self._channel}], defaulting to [cut].')
-            self._channel = 'cut'
+        # -- Discover which channels this board actually offers --
+        # cut and coag are required (present on every version). The others are
+        # optional; a board that doesn't advertise them is simply an older rev.
+        self._clients = {}
+        self.get_logger().info('Discovering ESU-TAP services...')
+        for ch, srv in ALL_CHANNELS.items():
+            cli = self.create_client(SetBool, srv)
+            if cli.wait_for_service(timeout_sec=self._discover):
+                self._clients[ch] = cli
+                self.get_logger().info(f'  found {srv}')
+            else:
+                # Not on this board. Required channels missing is an error.
+                if ch in ('cut', 'coag'):
+                    self.get_logger().error(
+                        f'Required service {srv} not found. Is the agent running '
+                        'and the board flashed?')
+                    raise SystemExit(2)
+                self.get_logger().info(f'  {srv} not present (older board rev)')
 
-        # -- Service clients --
-        self._cli_cut  = self.create_client(SetBool, '/esu/cut')
-        self._cli_coag = self.create_client(SetBool, '/esu/coag')
-
-        self.get_logger().info('Waiting for ESU-TAP services...')
-        self._cli_cut.wait_for_service()
-        self._cli_coag.wait_for_service()
+        board = {2: 'v1', 3: 'v2', 4: 'v3'}.get(len(self._clients), f'{len(self._clients)}-channel')
         self.get_logger().info(
-            f'Connected. Commander started in [{self._mode}] mode (channel={self._channel}).'
-        )
+            f'Connected to {board} board. Channels: {sorted(self._clients)}')
+
+        # Fall back the default channel if the requested one isn't available.
+        if self._channel not in self._clients:
+            self.get_logger().warn(
+                f'Channel [{self._channel}] not available on this board; '
+                'defaulting to [cut].')
+            self._channel = 'cut'
 
         # -- Launch mode --
         if self._mode == 'interactive':
@@ -82,17 +120,17 @@ class PedalCommander(Node):
             raise SystemExit(2)
 
     # -- Service call helper --
-    def _client_for(self, channel):
-        return self._cli_cut if channel == 'cut' else self._cli_coag
-
     def _call(self, channel: str, activate: bool):
         """Call the SetBool service for a channel and log the acknowledgement."""
-        client = self._client_for(channel)
+        client = self._clients.get(channel)
+        if client is None:
+            self.get_logger().warn(f'{channel} not available on this board.')
+            return False
+
         req = SetBool.Request()
         req.data = activate
 
         future = client.call_async(req)
-        # Spin this node until the response arrives or we time out.
         rclpy.spin_until_future_complete(self, future, timeout_sec=self._timeout)
 
         if future.done() and future.result() is not None:
@@ -103,8 +141,7 @@ class PedalCommander(Node):
             return res.success
         else:
             self.get_logger().error(
-                f'{channel.upper()} {"ON" if activate else "OFF"} -> no response (timeout)'
-            )
+                f'{channel.upper()} {"ON" if activate else "OFF"} -> no response (timeout)')
             return False
 
     def press(self):
@@ -115,52 +152,48 @@ class PedalCommander(Node):
 
     # -- Interactive mode --
     def _interactive_loop(self):
-        # Independent on/off state per channel, so you can hold CUT while
-        # toggling COAG, etc.
-        state = {'cut': False, 'coag': False}
+        # Independent on/off state per available channel.
+        state = {ch: False for ch in self._clients}
+
+        # Only show keys for channels this board has.
+        active_keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in self._clients}
 
         def show_help():
             print('\n=== Pedal Commander (interactive, service client) ===')
-            print('  c  ENTER  -> toggle CUT')
-            print('  g  ENTER  -> toggle COAG   (g = coaG, since c is taken)')
+            for k, ch in active_keys.items():
+                print(f'  {k}  ENTER  -> toggle {ch.upper()}')
             print('  x  ENTER  -> all OFF (safety)')
             print('  s  ENTER  -> show current state')
             print('  h  ENTER  -> help')
             print('  Ctrl+C    -> quit (deactivates everything)\n')
-            print('  Tip: bare ENTER toggles the default channel '
-                  f'({self._channel}), matching the old behaviour.\n')
+            print(f'  Tip: bare ENTER toggles the default channel ({self._channel}).\n')
 
         def toggle(channel):
             new = not state[channel]
-            ok = self._call(channel, new)
-            if ok:
+            if self._call(channel, new):
                 state[channel] = new
 
         def report():
-            c = 'ON' if state['cut'] else 'off'
-            g = 'ON' if state['coag'] else 'off'
-            print(f'   state: CUT={c}  COAG={g}')
+            print('   state: ' + '  '.join(
+                f'{ch.upper()}={"ON" if state[ch] else "off"}' for ch in self._clients))
 
         show_help()
         while True:
             raw = input('> ').strip().lower()
 
-            if raw in ('c', 'cut'):
-                toggle('cut')
-            elif raw in ('g', 'coag'):
-                toggle('coag')
+            if raw in active_keys:
+                toggle(active_keys[raw])
+            elif raw in self._clients:            # full channel name typed
+                toggle(raw)
             elif raw in ('x', 'off', 'stop'):
-                # Command both channels off regardless of tracked state.
-                self._call('cut', False)
-                self._call('coag', False)
-                state['cut'] = state['coag'] = False
+                for ch in self._clients:
+                    self._call(ch, False)
+                    state[ch] = False
             elif raw in ('s', 'state'):
                 report()
             elif raw in ('h', 'help', '?'):
                 show_help()
             elif raw == '':
-                # Bare ENTER toggles the default channel -- preserves the
-                # original single-channel muscle memory.
                 toggle(self._channel)
             else:
                 print(f'   unknown: {raw!r}  (h for help)')
@@ -194,7 +227,9 @@ def main(args=None):
         pass
     finally:
         try:
-            node.release()  # safety: always deactivate on exit
+            # Safety: deactivate every channel this board has on exit.
+            for ch in node._clients:
+                node._call(ch, False)
         except Exception:
             pass
         node.destroy_node()
