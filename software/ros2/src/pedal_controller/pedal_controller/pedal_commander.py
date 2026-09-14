@@ -76,12 +76,16 @@ class PedalCommander(Node):
         # -- Discover which channels this board actually offers --
         # cut and coag are required (present on every version). The others are
         # optional; a board that doesn't advertise them is simply an older rev.
-        self._clients = {}
+        #
+        # NOTE: this dict must NOT be named self._clients -- rclpy's Node base
+        # class already owns self._clients (a list it appends to in
+        # create_client). Shadowing it breaks client creation.
+        self._esu_clients = {}
         self.get_logger().info('Discovering ESU-TAP services...')
         for ch, srv in ALL_CHANNELS.items():
             cli = self.create_client(SetBool, srv)
             if cli.wait_for_service(timeout_sec=self._discover):
-                self._clients[ch] = cli
+                self._esu_clients[ch] = cli
                 self.get_logger().info(f'  found {srv}')
             else:
                 # Not on this board. Required channels missing is an error.
@@ -92,12 +96,12 @@ class PedalCommander(Node):
                     raise SystemExit(2)
                 self.get_logger().info(f'  {srv} not present (older board rev)')
 
-        board = {2: 'v1', 3: 'v2', 4: 'v3'}.get(len(self._clients), f'{len(self._clients)}-channel')
+        board = {2: 'v1', 3: 'v2', 4: 'v3'}.get(len(self._esu_clients), f'{len(self._esu_clients)}-channel')
         self.get_logger().info(
-            f'Connected to {board} board. Channels: {sorted(self._clients)}')
+            f'Connected to {board} board. Channels: {sorted(self._esu_clients)}')
 
         # Fall back the default channel if the requested one isn't available.
-        if self._channel not in self._clients:
+        if self._channel not in self._esu_clients:
             self.get_logger().warn(
                 f'Channel [{self._channel}] not available on this board; '
                 'defaulting to [cut].')
@@ -122,7 +126,7 @@ class PedalCommander(Node):
     # -- Service call helper --
     def _call(self, channel: str, activate: bool):
         """Call the SetBool service for a channel and log the acknowledgement."""
-        client = self._clients.get(channel)
+        client = self._esu_clients.get(channel)
         if client is None:
             self.get_logger().warn(f'{channel} not available on this board.')
             return False
@@ -153,10 +157,10 @@ class PedalCommander(Node):
     # -- Interactive mode --
     def _interactive_loop(self):
         # Independent on/off state per available channel.
-        state = {ch: False for ch in self._clients}
+        state = {ch: False for ch in self._esu_clients}
 
         # Only show keys for channels this board has.
-        active_keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in self._clients}
+        active_keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in self._esu_clients}
 
         def show_help():
             print('\n=== Pedal Commander (interactive, service client) ===')
@@ -175,7 +179,7 @@ class PedalCommander(Node):
 
         def report():
             print('   state: ' + '  '.join(
-                f'{ch.upper()}={"ON" if state[ch] else "off"}' for ch in self._clients))
+                f'{ch.upper()}={"ON" if state[ch] else "off"}' for ch in self._esu_clients))
 
         show_help()
         while True:
@@ -183,10 +187,10 @@ class PedalCommander(Node):
 
             if raw in active_keys:
                 toggle(active_keys[raw])
-            elif raw in self._clients:            # full channel name typed
+            elif raw in self._esu_clients:            # full channel name typed
                 toggle(raw)
             elif raw in ('x', 'off', 'stop'):
-                for ch in self._clients:
+                for ch in self._esu_clients:
                     self._call(ch, False)
                     state[ch] = False
             elif raw in ('s', 'state'):
@@ -228,7 +232,7 @@ def main(args=None):
     finally:
         try:
             # Safety: deactivate every channel this board has on exit.
-            for ch in node._clients:
+            for ch in node._esu_clients:
                 node._call(ch, False)
         except Exception:
             pass
