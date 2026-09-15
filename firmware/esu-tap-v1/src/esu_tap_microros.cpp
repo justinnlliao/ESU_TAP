@@ -68,11 +68,29 @@
 #include <rmw_microros/rmw_microros.h>
 
 #include <std_srvs/srv/set_bool.h>
-#include <std_msgs/msg/int32_multi_array.h>
+#include <std_msgs/msg/int32.h>
 
-// Needed for rosidl_runtime_c__String__init / __assign, used to populate the
-// SetBool response .message field. Not pulled in transitively by the service
-// or message headers above.
+// ============================================================================
+// BOARD CONFIG  (this block is the ONLY thing that differs between v1/v2/v3)
+// ----------------------------------------------------------------------------
+// This is the v1 board: MONOPOLAR only (CUT + COAG). No bipolar, no ligasure.
+//
+// PEDAL_CONNECTED selects the operating mode:
+//   1 = DEFAULT. A foot pedal IS wired to the sense inputs (data-recording
+//       mode). The firmware reads the pedal contacts and forwards surgeon
+//       presses. This is the normal operating assumption.
+//   0 = STANDALONE / AUTONOMOUS mode: no pedal is connected. The sense inputs
+//       are IGNORED entirely (they would otherwise float and read phantom
+//       presses on the input-only IO34/IO35 pins, which have no internal
+//       pull-up). Relays are driven purely by computer/ROS commands. Set this
+//       to 0 and reflash ONLY when running the unit without a pedal.
+//
+// Default assumes a pedal is present; switch to 0 for autonomous operation.
+#define PEDAL_CONNECTED 1
+// ============================================================================
+
+// Needed for rosidl_runtime_c__String__init, used only to initialise the
+// (now-empty) SetBool response .message field so it serialises cleanly.
 #include <rosidl_runtime_c/string_functions.h>
 
 // ----------------------------- Pin map -----------------------------
@@ -101,10 +119,18 @@ rcl_service_t       srv_coag;
 std_srvs__srv__SetBool_Request  req_cut,  req_coag;
 std_srvs__srv__SetBool_Response resp_cut, resp_coag;
 
-// Status publisher
-rcl_publisher_t             pub_state;
-std_msgs__msg__Int32MultiArray state_msg;
-int32_t state_data[3];   // [cut, coag, source] -- backing store for state_msg.data
+// Status publisher.
+// PACKED Int32 wire format (standardised across v1/v2/v3):
+//   bit 0    : cut      (0/1)
+//   bit 1    : coag     (0/1)
+//   bit 2    : bipolar  (0/1)  -- always 0 on v1
+//   bit 3    : ligasure (0/1)  -- always 0 on v1
+//   bits 4-5 : source   (0=surgeon, 1=computer, 2=baseline)
+// A single Int32 has no variable-length sequences, so it serialises
+// deterministically over micro-ROS/XRCE (unlike Int32MultiArray, whose layout
+// sequence overran the buffer). The ROS-side decoder is protocol.parse_state.
+rcl_publisher_t      pub_state;
+std_msgs__msg__Int32 state_msg;
 
 // Periodic timer to poll sense inputs
 rcl_timer_t         timer;
@@ -191,38 +217,30 @@ void destroy_entities();
   (_t == -1) || ((int32_t)(millis() - _t) >= (MS)); _t = millis())
 
 // --------------------- Publish current state -----------------------
-// state_msg is fully initialised once in setup() via
-// std_msgs__msg__Int32MultiArray__init, which zeroes BOTH the data sequence
-// and the nested layout (layout.dim). Skipping that init leaves layout.dim
-// with garbage size/capacity on the stack; the serializer then walks a
-// bogus-length dim sequence and overruns the buffer -- the
-// "sequence size exceeds remaining buffer" flood. Here we only update the
-// three payload values; the sequence storage is already wired up.
+// Packs cut/coag/source into one Int32 (see wire-format note above). Bipolar
+// and ligasure bits are always 0 on v1. state_msg is a plain scalar, so there
+// is no sequence/layout to initialise -- just set .data.
 void publish_state(int cut, int coag, int source) {
-  state_data[0] = cut;
-  state_data[1] = coag;
-  state_data[2] = source;   // 0 = surgeon, 1 = computer, 2 = baseline
-  state_msg.data.data = state_data;
-  state_msg.data.size = 3;
-  state_msg.data.capacity = 3;
+  state_msg.data = (cut & 1)
+                 | ((coag & 1) << 1)
+                 // bit 2 (bipolar) and bit 3 (ligasure) stay 0 on v1
+                 | ((source & 0x3) << 4);
   RCSOFTCHECK(rcl_publish(&pub_state, &state_msg, NULL));
 }
 
 // --------------------- Service callbacks ---------------------------
+// Callbacks set the command flag only; the timer owns all relay/LED writes.
+// We return success only, NO response .message string -- the human-readable
+// "cut on"/"coag off" confirmation is generated on the PC (pedal_commander).
+// A variable-length string is the most corruption-prone thing on a marginal
+// serial link, so we keep it off the wire.
 void cut_service_callback(const void *req, void *resp) {
   const std_srvs__srv__SetBool_Request *rq =
       (const std_srvs__srv__SetBool_Request *)req;
   std_srvs__srv__SetBool_Response *rs =
       (std_srvs__srv__SetBool_Response *)resp;
-
-  // Only set the command flag. The timer callback owns ALL relay and LED
-  // writes, driving them from the effective (sensed OR commanded) state. If we
-  // also wrote the relay here we'd have two writers racing on the same pin.
   cmdCut = rq->data ? 1 : 0;
   rs->success = true;
-  rosidl_runtime_c__String__assign(&rs->message, rq->data ? "cut on" : "cut off");
-  // Relay closes and the state change publishes on the next timer tick
-  // (<= 10 ms later).
 }
 
 void coag_service_callback(const void *req, void *resp) {
@@ -230,11 +248,8 @@ void coag_service_callback(const void *req, void *resp) {
       (const std_srvs__srv__SetBool_Request *)req;
   std_srvs__srv__SetBool_Response *rs =
       (std_srvs__srv__SetBool_Response *)resp;
-
-  // See cut_service_callback: flag only, timer owns the outputs.
   cmdCoag = rq->data ? 1 : 0;
   rs->success = true;
-  rosidl_runtime_c__String__assign(&rs->message, rq->data ? "coag on" : "coag off");
 }
 
 // --------------------- Timer: poll sense + publish -----------------
@@ -244,6 +259,7 @@ void timer_callback(rcl_timer_t *t, int64_t last_call_time) {
 
   unsigned long now = millis();
 
+#if PEDAL_CONNECTED
   // Read pedal dry contacts (active-low: LOW = pressed)
   rawCut  = (digitalRead(PIN_SENSE_CUT)  == LOW) ? 1 : 0;
   rawCoag = (digitalRead(PIN_SENSE_COAG) == LOW) ? 1 : 0;
@@ -255,6 +271,15 @@ void timer_callback(rcl_timer_t *t, int64_t last_call_time) {
   // Debounce COAG
   if (rawCoag != lastRawCoag) { lastRawCoag = rawCoag; lastRawChangeCoagMs = now; }
   if ((now - lastRawChangeCoagMs) >= DEBOUNCE_MS) { stableCoag = rawCoag; }
+#else
+  // STANDALONE mode: no pedal wired. Do NOT read the sense pins -- IO34/IO35
+  // are input-only with no internal pull-up, so unconnected they float and
+  // read random noise as phantom presses. Hold the sensed state at 0 so only
+  // computer commands drive the outputs.
+  (void)now;
+  stableCut = 0;
+  stableCoag = 0;
+#endif
 
   // Snapshot the commanded state once, so a service callback running mid-tick
   // cannot change it between the edge test and the publish.
@@ -313,7 +338,7 @@ bool create_entities() {
 
   if (rclc_publisher_init_default(
         &pub_state, &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32MultiArray),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
         "/esu/activation_state") != RCL_RET_OK) return false;
 
   if (rclc_service_init_default(
@@ -343,7 +368,7 @@ bool create_entities() {
   if (!msg_inited) {
     rosidl_runtime_c__String__init(&resp_cut.message);
     rosidl_runtime_c__String__init(&resp_coag.message);
-    std_msgs__msg__Int32MultiArray__init(&state_msg);
+    state_msg.data = 0;   // plain scalar Int32 -- no sequence/layout to init
     msg_inited = true;
   }
 

@@ -46,7 +46,7 @@ from datetime import datetime
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32
 
 from pedal_controller.protocol import parse_state
 
@@ -84,7 +84,7 @@ class PedalLogger(Node):
 
         # -- Subscription --
         self.create_subscription(
-            Int32MultiArray, '/esu/activation_state', self._state_callback, 10)
+            Int32, '/esu/activation_state', self._state_callback, 10)
 
         # -- State tracking --
         # A late-joining logger does not know the board's present state.
@@ -105,14 +105,21 @@ class PedalLogger(Node):
             states['cut'], states['coag'], states['bipolar'], states['ligasure']
         ])
         self._file.flush()
+        # Print a clean, human-readable line to the terminal too. Uppercase +
+        # arrows so it stands out from any transport noise on the same console.
+        if edge_action == 'press':
+            verb = 'ON '
+        elif edge_action == 'release':
+            verb = 'OFF'
+        else:
+            verb = 'SYNC'
+        active = [c for c in self.CHANNEL_ORDER if states[c]]
+        active_str = ', '.join(active) if active else 'none'
         self.get_logger().info(
-            f'[{src_str}] {channel} {edge_action} @ {ros_now_ns} ns '
-            f'(cut={states["cut"]}, coag={states["coag"]}, '
-            f'bipolar={states["bipolar"]}, ligasure={states["ligasure"]})'
-        )
+            f'>>> {channel.upper():8} {verb}  [{src_str:8}]   active: {active_str}')
 
     # -- State callback --
-    def _state_callback(self, msg: Int32MultiArray):
+    def _state_callback(self, msg: Int32):
         try:
             channel_values, source = parse_state(msg.data)
         except ValueError as exc:
@@ -123,12 +130,12 @@ class PedalLogger(Node):
             self.get_logger().error('State schema changed; use one board per ROS domain and restart logger.')
             return
 
-        # One-time note about which board we're talking to.
+        # One-time note. The packed format always carries all 4 channel bits,
+        # so we can't infer the board version from the message -- just report
+        # that telemetry is flowing. (Unused channels simply stay 0.)
         if self._n_channels is None:
             self._n_channels = n_channels
-            board = {2: 'v1 (mono)', 3: 'v2 (mono+bipolar)',
-                     4: 'v3 (mono+bipolar+ligasure)'}.get(n_channels, f'{n_channels}-channel')
-            self.get_logger().info(f'Detected {board} firmware ({n_channels} channels).')
+            self.get_logger().info('Receiving telemetry; logging active channels.')
 
         # Build the current full-width state dict (channels not present stay 0).
         states = {ch: 0 for ch in self.CHANNEL_ORDER}

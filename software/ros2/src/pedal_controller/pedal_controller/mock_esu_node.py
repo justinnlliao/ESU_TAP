@@ -11,7 +11,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import SetBool
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32
 
 from pedal_controller.protocol import revision_channels, require_channel
 
@@ -33,7 +33,7 @@ class MockEsuNode(Node):
         self.effective = self.sensed.copy()
         self._baseline = True
         self.last_sim = time.monotonic()
-        self.pub = self.create_publisher(Int32MultiArray, '/esu/activation_state', 10)
+        self.pub = self.create_publisher(Int32, '/esu/activation_state', 10)
         self._esu_services = [self.create_service(SetBool, f'/esu/{ch}', self._callback(ch))
                          for ch in self.channels]
         self.create_timer(0.01, self._tick)
@@ -48,8 +48,14 @@ class MockEsuNode(Node):
         return callback
 
     def _publish(self, source):
-        msg = Int32MultiArray()
-        msg.data = [self.effective[ch] for ch in self.channels] + [source]
+        # Pack channels into bits 0..3 and source into bits 4-5, matching the
+        # firmware wire format and protocol.parse_state's decoder.
+        packed = source << 4
+        for i, ch in enumerate(self.channels):
+            if self.effective[ch]:
+                packed |= (1 << i)
+        msg = Int32()
+        msg.data = packed
         self.pub.publish(msg)
 
     def _tick(self):

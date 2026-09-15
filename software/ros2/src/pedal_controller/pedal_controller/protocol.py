@@ -22,14 +22,53 @@ def require_channel(channel, available):
 
 
 def parse_state(data):
-    values = tuple(data)
-    if len(values) not in (3, 4, 5):
-        raise ValueError('Expected 3, 4, or 5 state fields')
-    if any(not isinstance(v, Integral) for v in values):
-        raise ValueError('State fields must be integers')
-    if any(v not in (0, 1) for v in values[:-1]) or values[-1] not in (0, 1, 2):
-        raise ValueError('Invalid channel state or source')
-    return values[:-1], values[-1]
+    """Accept either the packed-Int32 wire format or the legacy array format.
+
+    Packed Int32 (current firmware): a single integer with
+        bit 0    : cut
+        bit 1    : coag
+        bit 2    : bipolar
+        bit 3    : ligasure
+        bits 4-5 : source (0/1/2)
+    Passed in as a 1-element sequence [packed] or a bare int.
+
+    Legacy array (older firmware): [cut, coag, (bipolar,) (ligasure,) source],
+    i.e. 3, 4, or 5 elements with source last.
+
+    Returns (channel_states_tuple, source).
+    """
+    # Bare int or 1-element sequence -> packed format.
+    if isinstance(data, Integral):
+        packed = int(data)
+    else:
+        values = tuple(data)
+        if len(values) == 1:
+            packed = int(values[0])
+        else:
+            # Legacy array path.
+            if len(values) not in (3, 4, 5):
+                raise ValueError('Expected packed int or 3/4/5 array fields')
+            if any(not isinstance(v, Integral) for v in values):
+                raise ValueError('State fields must be integers')
+            if any(v not in (0, 1) for v in values[:-1]) or values[-1] not in (0, 1, 2):
+                raise ValueError('Invalid channel state or source')
+            return values[:-1], values[-1]
+    # Decode packed int. Channels are bits 0..3; source is bits 4-5.
+    # CORRUPTION GUARD: only bits 0-5 are ever meaningful. A clean baseline is
+    # 0x20 (32), a clean activation is <= 0x2F. If any bit above bit 5 is set,
+    # the byte was corrupted in transit (a real risk on a noisy serial link) --
+    # reject it rather than decode garbage as a phantom "cut on". On an ESU a
+    # false activation in the log is worse than a dropped message.
+    if packed < 0 or packed > 0x3F:
+        raise ValueError(f'Corrupt packed state 0x{packed:X} (bits above 5 set)')
+    cut = packed & 1
+    coag = (packed >> 1) & 1
+    bipolar = (packed >> 2) & 1
+    ligasure = (packed >> 3) & 1
+    source = (packed >> 4) & 0x3
+    if source not in (0, 1, 2):
+        raise ValueError('Invalid source in packed state')
+    return (cut, coag, bipolar, ligasure), source
 
 
 @dataclass(frozen=True)

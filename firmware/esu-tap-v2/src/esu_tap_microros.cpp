@@ -82,7 +82,7 @@
 #include <rmw_microros/rmw_microros.h>
 
 #include <std_srvs/srv/set_bool.h>
-#include <std_msgs/msg/int32_multi_array.h>
+#include <std_msgs/msg/int32.h>
 
 #include <rosidl_runtime_c/string_functions.h>
 
@@ -117,10 +117,20 @@ rcl_service_t       srv_cut, srv_coag, srv_bi;
 std_srvs__srv__SetBool_Request  req_cut,  req_coag,  req_bi;
 std_srvs__srv__SetBool_Response resp_cut, resp_coag, resp_bi;
 
-// Status publisher
-rcl_publisher_t                pub_state;
-std_msgs__msg__Int32MultiArray state_msg;
-int32_t state_data[4];   // [cut, coag, bipolar, source]
+// Status publisher.
+// NOTE: we publish a single packed Int32, NOT Int32MultiArray. Int32MultiArray
+// carries a variable-length layout.dim sequence that does not serialize
+// reliably over micro-ROS/XRCE -- it produced a persistent
+// "sequence size exceeds remaining buffer" flood on the subscriber. A plain
+// Int32 has no sequences and serializes deterministically.
+//
+// Packing (matches the ROS-side decoder in protocol.py):
+//   bit 0    : cut      (0/1)
+//   bit 1    : coag     (0/1)
+//   bit 2    : bipolar  (0/1)
+//   bits 4-5 : source   (0=surgeon, 1=computer, 2=baseline)
+rcl_publisher_t     pub_state;
+std_msgs__msg__Int32 state_msg;
 
 // Periodic timer to poll sense inputs + pet the watchdog
 rcl_timer_t         timer;
@@ -210,14 +220,12 @@ inline void pet_watchdog() {
 }
 
 // --------------------- Publish current state -----------------------
+// Packs cut/coag/bipolar/source into one Int32. See the field layout above.
 void publish_state(int cut, int coag, int bipolar, int source) {
-  state_data[0] = cut;
-  state_data[1] = coag;
-  state_data[2] = bipolar;
-  state_data[3] = source;
-  state_msg.data.data = state_data;
-  state_msg.data.size = 4;
-  state_msg.data.capacity = 4;
+  state_msg.data = (cut & 1)
+                 | ((coag & 1) << 1)
+                 | ((bipolar & 1) << 2)
+                 | ((source & 0x3) << 4);
   RCSOFTCHECK(rcl_publish(&pub_state, &state_msg, NULL));
 }
 
@@ -225,12 +233,19 @@ void publish_state(int cut, int coag, int bipolar, int source) {
 // Callbacks ONLY set command flags. timer_callback owns ALL relay and LED
 // writes, driving them from the effective (sensed OR commanded) state, so
 // there is a single writer per output.
+//
+// We return success only -- NO response .message string. The human-readable
+// confirmation the operator sees ("cut on", "coag off", ...) is generated on
+// the PC side (pedal_commander) from which service was called + success. This
+// keeps the wire payload minimal and robust: a variable-length string is the
+// largest and most corruption-prone thing on a marginal serial link, and it
+// grows with each added channel (bipolar, ligasure). Translate on the host,
+// not over the wire.
 void cut_service_callback(const void *req, void *resp) {
   const std_srvs__srv__SetBool_Request *rq = (const std_srvs__srv__SetBool_Request *)req;
   std_srvs__srv__SetBool_Response *rs = (std_srvs__srv__SetBool_Response *)resp;
   cmdCut = rq->data ? 1 : 0;
   rs->success = true;
-  rosidl_runtime_c__String__assign(&rs->message, rq->data ? "cut on" : "cut off");
 }
 
 void coag_service_callback(const void *req, void *resp) {
@@ -238,7 +253,6 @@ void coag_service_callback(const void *req, void *resp) {
   std_srvs__srv__SetBool_Response *rs = (std_srvs__srv__SetBool_Response *)resp;
   cmdCoag = rq->data ? 1 : 0;
   rs->success = true;
-  rosidl_runtime_c__String__assign(&rs->message, rq->data ? "coag on" : "coag off");
 }
 
 void bi_service_callback(const void *req, void *resp) {
@@ -246,7 +260,6 @@ void bi_service_callback(const void *req, void *resp) {
   std_srvs__srv__SetBool_Response *rs = (std_srvs__srv__SetBool_Response *)resp;
   cmdBi = rq->data ? 1 : 0;
   rs->success = true;
-  rosidl_runtime_c__String__assign(&rs->message, rq->data ? "bipolar on" : "bipolar off");
 }
 
 // --------------------- Timer: poll sense + publish + pet -----------
@@ -322,7 +335,7 @@ bool create_entities() {
 
   if (rclc_publisher_init_default(
         &pub_state, &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32MultiArray),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
         "/esu/activation_state") != RCL_RET_OK) return false;
 
   if (rclc_service_init_default(
@@ -355,7 +368,7 @@ bool create_entities() {
     rosidl_runtime_c__String__init(&resp_cut.message);
     rosidl_runtime_c__String__init(&resp_coag.message);
     rosidl_runtime_c__String__init(&resp_bi.message);
-    std_msgs__msg__Int32MultiArray__init(&state_msg);
+    state_msg.data = 0;
     msg_inited = true;
   }
 
@@ -380,9 +393,15 @@ void destroy_entities() {
 
 // ----------------------------- Setup -------------------------------
 void setup() {
-  pinMode(PIN_SENSE_CUT,  INPUT);   // external pull-ups on board
-  pinMode(PIN_SENSE_COAG, INPUT);
-  pinMode(PIN_SENSE_BI,   INPUT);
+  // Sense inputs: pedal dry contacts, active-low. External 10k pull-ups on the
+  // board. IO34/35 are INPUT-ONLY and have NO internal pull-up, so they rely on
+  // the external one. IO17 (bipolar) DOES support an internal pull-up -- enable
+  // it as a backup so that if the bipolar pedal is UNPLUGGED on the bench, the
+  // line is held HIGH (inactive) instead of floating and reading random noise
+  // as phantom "surgeon pressed bipolar" events.
+  pinMode(PIN_SENSE_CUT,  INPUT);          // external pull-up only (input-only pin)
+  pinMode(PIN_SENSE_COAG, INPUT);          // external pull-up only (input-only pin)
+  pinMode(PIN_SENSE_BI,   INPUT_PULLUP);   // internal pull-up backs the external
   pinMode(PIN_RELAY_CUT,  OUTPUT);
   pinMode(PIN_RELAY_COAG, OUTPUT);
   pinMode(PIN_RELAY_BI,   OUTPUT);
@@ -400,7 +419,12 @@ void setup() {
   digitalWrite(PIN_WDT,        LOW);
 
   // micro-ROS transport over USB serial (micro_ros_platformio form).
-  Serial.begin(115200);
+  // 57600 (not 115200) for robustness on a marginal USB/serial link -- a lower
+  // baud is far more tolerant of line noise, which showed up as intermittent
+  // "sequence size exceeds remaining buffer" corruption at 115200. Foot-pedal
+  // events are human-scale, so the added latency is irrelevant. Must match the
+  // agent's -b argument and platformio.ini monitor_speed.
+  Serial.begin(57600);
   set_microros_serial_transports(Serial);
   delay(2000);
 

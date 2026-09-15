@@ -60,11 +60,17 @@ class PedalCommander(Node):
         request.data = activate
         result = call_service(self._esu_clients[channel], request,
                               self._timeout if timeout is None else timeout)
-        message = f'{channel.upper()} {"ON" if activate else "OFF"}: {result.message}'
+        # Human-readable confirmation is generated HERE on the PC, not sent over
+        # the wire. The firmware returns success only (no response string) to
+        # keep the serial payload small and robust. The operator still sees
+        # "cut on" / "coag off" / etc.
+        label = f'{channel} {"on" if activate else "off"}'   # e.g. "cut on"
         if result.success:
-            self.get_logger().info(message)
+            self.get_logger().info(label)
         else:
-            self.get_logger().error(message)
+            # On failure, report the transport reason (timeout etc.), not a
+            # confirmation we cannot stand behind.
+            self.get_logger().error(f'{label}: NOT CONFIRMED ({result.message})')
         return result.success
 
     def all_off(self):
@@ -89,11 +95,14 @@ class PedalCommander(Node):
         return on_ok and off_ok
 
     def _interactive_loop(self):
-        # Unknown until acknowledged; never present a local guess as feedback.
-        state = dict.fromkeys(self._esu_clients)
+        # The board boots with all relays driven LOW (firmware setup()), so the
+        # known resting state is OFF for every channel. Start from False, not
+        # None: the first keypress on a channel then correctly turns it ON,
+        # instead of sending a confusing OFF for a channel that was never on.
+        state = dict.fromkeys(self._esu_clients, False)
         keys = {k: ch for k, ch in CHANNEL_KEYS.items() if ch in state}
-        print(f'Keys: {keys}; x=OFF requests; s=last acknowledged commands; Ctrl+C=quit')
-        print('Unknown state: first toggle requests OFF. This is not contact feedback.')
+        print(f'Keys: {keys}; x=all OFF; s=last acknowledged commands; Ctrl+C=quit')
+        print('All channels start OFF (board boots with relays open).')
         while True:
             raw = input('> ').strip().lower()
             if raw in ('x', 'off', 'stop'):
@@ -106,7 +115,9 @@ class PedalCommander(Node):
                 if ch not in state:
                     print('Unknown/unavailable channel; no request sent.')
                     continue
-                target = state[ch] is False
+                # Toggle from the known state. state[ch] is False at rest, so
+                # the first press turns the channel ON.
+                target = not state[ch] if state[ch] is not None else True
                 if self._call(ch, target):
                     state[ch] = target
                 else:

@@ -7,7 +7,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.signals import SignalHandlerOptions
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
 
 from pedal_controller.protocol import StateHistory, revision_channels
@@ -22,7 +22,7 @@ class BenchNode(Node):
         self.channels = revision_channels(self.get_parameter('board_version').value)
         self.history = StateHistory(len(self.channels))
         self._esu_clients = {}
-        self.create_subscription(Int32MultiArray, '/esu/activation_state', self._on_state, 100)
+        self.create_subscription(Int32, '/esu/activation_state', self._on_state, 100)
 
     def _on_state(self, msg):
         received_at = time.monotonic()
