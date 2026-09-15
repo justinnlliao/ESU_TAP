@@ -8,7 +8,18 @@ track alongside the board they target.
 
 ---
 
-## [Unreleased] — Software review corrections (2026-09-14)
+## [Unreleased] — Restore v1 firmware (2026-09-15)
+
+- Restored v1 source, PlatformIO configuration and micro-ROS metadata from
+  c63bfcf into a dedicated `firmware/esu-tap-v1/` project; historical contents
+  preserved rather than adapting v2/v3 firmware.
+- Added [new-account recovery/setup on blue](docs/V1_BLUE_SETUP.md), including
+  USB permissions, correct v1 pin map, firmware upload, ROS build, agent/logger
+  startup, and disconnected-fixture checks.
+- No PCB, v2/v3 firmware, or physical board was changed. A fresh target build
+  and physical tests remain required; historical dependencies are unpinned.
+
+## Software review corrections (2026-09-14)
 
 - Refuse unavailable command channels instead of substituting CUT. Use one
   executor thread; remove nested/concurrent spinning and bound the ON response

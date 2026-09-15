@@ -8,11 +8,14 @@ Read [protection and validation status](../../docs/SAFETY_AND_VALIDATION.md).
 
 | Board | Firmware project | Channels | State fields |
 | --- | --- | --- | --- |
-| v1 | No current standalone project | CUT, COAG | cut, coag, source |
+| v1 | firmware/esu-tap-v1 (restored historical source) | CUT, COAG | cut, coag, source |
 | v2 | firmware/esu-tap-v2 | Adds bipolar | cut, coag, bipolar, source |
 | v3 | firmware/esu-tap-v3 | Adds LigaSure | cut, coag, bipolar, ligasure, source |
 
-Do not flash a newer pin map onto v1. Commander discovers services; unavailable
+For v1 recovery on a new blue account, follow the
+[complete v1 pipeline](../../docs/V1_BLUE_SETUP.md), including its default domain
+and revision-specific supply cautions. Do not flash a newer pin map onto v1.
+Commander discovers services; unavailable
 requested channels are errors, never replacements. Mock and bench tools require
 the selected `board_version` (default `v3`).
 The logger reads source from the final field and rejects a width change mid-run.

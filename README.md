@@ -10,7 +10,8 @@ fail-safe guarantee.
 
 ## Current status
 
-- v1: historical monopolar hardware.
+- v1: historical monopolar hardware; its original two-channel firmware is
+  restored in `firmware/esu-tap-v1/`. See [v1 setup on blue](docs/V1_BLUE_SETUP.md).
 - v2: CUT, COAG, and bipolar hardware and a dedicated firmware project.
 - v3: adds a fourth hardware path labeled LigaSure. Reviewed using KiCad 10.
   Dedicated v3 firmware implements LigaSure; generator-specific compatibility
@@ -81,9 +82,10 @@ Inferred effective-state edges do not capture every overlapping pedal/command ac
 
 - [Hardware](hardware/README.md): revision-specific KiCad projects, local libraries,
   and `fabrication/` exports.
-- `firmware/esu-tap-v2/` and `firmware/esu-tap-v3/`: separate PlatformIO projects
-  using `micro_ros_platformio`, not `micro_ros_arduino`. No v1 firmware project
-  is currently included; do not flash a newer pin map onto v1.
+- `firmware/esu-tap-v1/`, `firmware/esu-tap-v2/` and `firmware/esu-tap-v3/`:
+  separate PlatformIO projects using `micro_ros_platformio`, not
+  `micro_ros_arduino`. Select the physical board revision; do not flash a newer
+  pin map onto v1. The v1 project is a traceable historical restoration.
 - [ROS setup](software/ros2/SETUP.md): build, serial-agent, and development commands.
 - [Testing](software/ros2/TESTING.md): offline regressions, revision-selectable
   mock and dummy-fixture checks, and required physical tests.
