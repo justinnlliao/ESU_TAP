@@ -5,6 +5,12 @@ generator compatibility, RF delivery timing, or numerical reliability.
 See [pending physical fault tests](../../docs/SAFETY_AND_VALIDATION.md).
 Do not attach an operating electrosurgical generator to these tests.
 
+The operator's reported supervised phantom setup is a separate test context;
+it does not relax the fixture restriction or make `fixture_confirmed` appropriate
+for an energized generator. A board-power button restores manual bypass and
+is not a verified stop-all-RF emergency stop. See
+[cutoff verification and trial records](../../docs/SAFETY_AND_VALIDATION.md#reported-board-power-cutoff-and-phantom-testing).
+
 ## 1. Offline regression tests (no ROS required)
 
 From the repository root, with Python 3.10 or newer:
@@ -35,7 +41,7 @@ Start logger first, then the mock, then a client in separate terminals:
 ```bash
 ros2 run pedal_controller pedal_logger
 ros2 run pedal_controller mock_esu_node --ros-args -p board_version:=v3
-ros2 run pedal_controller pedal_commander
+ros2 run pedal_controller pedal_commander --ros-args -p fixture_confirmed:=true
 ```
 
 The mock defaults to v3 with simulated pedals OFF. Repeat with `v2` and `v1`.
@@ -46,11 +52,11 @@ Checks:
 
 1. Correct services exist; commander shows only available channels.
 2. Select unavailable LigaSure on a v2 mock: commander must reject, never send CUT ON.
-3. Pulse each supported channel; observe ON/OFF requests and logger edges without
+3. Explicitly arm computer control with pedals released. Pulse each supported channel; observe ON/OFF requests and logger edges without
    artificial service timeouts. Pulse timing is PC request scheduling only.
 4. Ctrl+C during a command: verify best-effort OFF acknowledgement.
 5. Restart logger mid-session: first observation is `sync`, not an invented press.
-   An idle late subscriber may wait for a change; the firmware has no state query.
+   Shared firmware capabilities provide an initial snapshot for late subscribers.
 6. Start a fresh mock with `-p sim_surgeon:=true -p sim_channel:=ligasure` on v3
    to exercise that channel's simulated pedal edges (default period 5 seconds).
 7. Never run two mock/hardware service providers with these names in the same domain.
@@ -95,11 +101,47 @@ supplies, domain/serial settings, repetitions, instrumentation, traces and failu
 
 ## Outstanding safety work
 
-Command expiration and powered-offline forwarding remain unimplemented; the
-external watchdog does not independently cancel activation or reset the ESP32.
-Define timeout, refresh and re-arm requirements before changing those behaviors.
+The shared candidate implements command expiry and offline local pedal processing,
+but the external watchdog still does not independently cancel activation or reset
+the ESP32. Prototype timing and the new control task need physical validation.
+Test lease expiry by stopping the commanding process while keeping the agent
+alive, then verify a late ON is refused until deliberate re-arm. Repeat each
+channel/revision with a held pedal, agent loss, and reconnection on a disconnected
+fixture. Verify the pedal remains effective and commands do not revive.
+
+Native control checks and the host runtime simulation (Linux; no Arduino/ROS
+or board required), for every profile in both pedal and standalone builds:
+
+```bash
+for revision in 1 2 3; do for pedal in 1 0; do
+  g++ -std=c++11 -Wall -Wextra -Werror -DESU_BOARD_VERSION=$revision -DESU_PEDAL_CONNECTED=$pedal \
+    firmware/test/control_test.cpp -o /tmp/esu-control-test && /tmp/esu-control-test || break 2
+  g++ -std=gnu++17 -pthread -Ifirmware/test/host_stubs -DESU_BOARD_VERSION=$revision \
+    -DESU_PEDAL_CONNECTED=$pedal firmware/test/runtime_sim.cpp -o /tmp/esu-runtime-sim \
+    && /tmp/esu-runtime-sim || break 2
+done; done
+```
+
+Run from the repository root. `control_test` checks the pure control logic.
+`runtime_sim` runs the real `runtime.hpp` (control task + ROS loop) on PC
+threads with stubbed Arduino/FreeRTOS/micro-ROS: baseline, pedal forwarding,
+arm gating, lease expiry, a failed publish being resynced without dropping the
+session, agent loss with local pedals still working, reconnection, watchdog
+petting, pin modes, and floating inputs in standalone builds. Neither covers the
+ESP32 scheduler, XRCE serialisation or electrical behavior. The provided Linux CI also builds target images;
+it has to run successfully before those builds can be claimed as verified.
 Validate supply loss, agent/transport/process loss, stalls, and stuck-contact/driver
 faults on a controlled dummy fixture. This software update does not resolve them.
 
-The 2026-09-14 update was tested offline only. Actual ROS Humble integration,
-target firmware builds and physical fault testing remain required.
+The 2026-10-19 update was tested offline only: 49 Python tests pass (adding
+baud agreement across firmware/PC/helper, one tolerated missed renewal,
+operator text, a lost acknowledgement reported as unknown output state,
+pedal/standalone mode changes blocking re-arm, `offline_pedals` matching the
+mode, unknown boot ID warnings, single-line sync, logging continuing after bad
+input, and `--no-pedal` build flags). Native control tests and the runtime simulation pass
+for all three profiles in pedal and standalone builds. The real PC modules were
+also run end to end against the mock over an in-process ROS stand-in. The
+2026-10-13 update (38 Python tests, native control tests) was likewise offline. The runtime also compiled to host objects against official
+Humble micro-ROS headers with Arduino/FreeRTOS stubs; that checks API usage, not
+ESP32 linking, scheduling or transport. Actual ROS Humble integration, target
+firmware builds and physical fault testing remain required.

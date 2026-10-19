@@ -1,30 +1,22 @@
-# ESU-TAP v1 firmware (historical restoration)
+# v1 firmware profile (legacy hardware retained)
 
-For the physical two-channel v1 PCB only. Do not select the v2/v3 PlatformIO
-projects for this board: the sense/LED pin maps differ.
+v1 remains supported using the shared firmware's explicit **v1** profile.
+CUT/COAG sense GPIOs are 34/35; relay GPIOs 26/27; LEDs 18/21. No external WDI
+is configured. Do not use a newer PCB profile on this board.
 
-The source, platformio.ini and colcon.meta were restored unchanged (allowing
-checkout newline normalization) from commit
-`c63bfcf2c6faf4437ad764aeee6c91029624eb55`, under `microros_firmware/`.
-That commit recorded a working system; this restoration is not a fresh bench
-test or a recovered binary. Unpinned dependencies can change today's build.
+The files here are compatibility entry points to [shared firmware](../README.md),
+not an unchanged historical restoration. Current serial baud is 115200 and
+telemetry is packed Int32 with protocol-2 capability discovery, explicit computer
+arming and command expiry. Physical pedal handling runs independently of ROS.
 
-| Signal | GPIO |
-| --- | --- |
-| CUT / COAG sense | 34 / 35 |
-| CUT / COAG relay drive | 26 / 27 |
-| CUT / COAG LED | 18 / 21 |
+Use the [unified setup](../../software/ros2/SETUP.md):
+`python3 software/esu.py build --board v1` from the repository root
+(add `--no-pedal` for standalone use without a pedal; unwired IO34/IO35 float).
+The old directory still supports build-only `pio run -e esp32dev`.
+Flashing requires the helper's explicit board/port/disconnected-fixture confirmation.
 
-USB serial: 115200 baud. ROS 2 Humble; default domain 0. Services are
-`/esu/cut` and `/esu/coag`; state is `[cut, coag, source]`.
-Source 2 is a boot/reconnection baseline, not proof of an MCU reset.
-
-Follow the [full new-account recovery guide](../../docs/V1_BLUE_SETUP.md).
-Build with `pio run -e esp32dev` in THIS folder; upload only after identifying
-the correct board/port, with the generator disconnected. The historical ini's
-`/dev/esp32-esu` port can be overridden with `--upload-port`.
-
-Historical source comments are preserved for traceability. Claims of safe OFF,
-guaranteed bypass, or reliable restart are not current qualification. There is
-no command lease, dependable powered-offline forwarding, or added hardware
-watchdog. See [limitations](../../docs/SAFETY_AND_VALIDATION.md).
+The original restoration remains traceable to commit
+`c63bfcf2c6faf4437ad764aeee6c91029624eb55`. The
+[historical blue recovery guide](../../docs/V1_BLUE_SETUP.md) documents that older
+image and its 115200/array interface; it is not the current install procedure.
+No physical v1 validation is established by this refactor.

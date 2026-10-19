@@ -8,6 +8,70 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: bench-candidate fixes (2026-10-19)
+
+- Serial baud is 115200 on every profile (was 57600), defined once in
+  `board_profile.hpp` and checked against `protocol.BAUD` and `esu.py` by a test.
+- Pedal-connected (default) vs standalone build: `--no-pedal`
+  (`-DESU_PEDAL_CONNECTED=0`) ignores the sense inputs so unwired inputs cannot
+  cause phantom activations or block arming. Reported in capabilities as
+  `pedal_connected`. Non-input-only sense pins (IO17, IO25) again enable the
+  internal pull-up as a backup.
+- A failed or queue-dropped telemetry publish no longer tears down the micro-ROS
+  session (which disarmed computer control on every lost message). It is
+  counted and followed by a fresh baseline snapshot. Publish confirmation window
+  raised from 10 ms to 50 ms. Link loss is still detected by agent pings.
+- Boot ID is an NVS boot counter (was `esp_random()` before RF start-up).
+- Logger: plain operator text (`cut on`, `coag off`), one terminal line on
+  connect/resync, capabilities read only at connection and after gaps (no
+  per-second text over serial), and warnings plus metadata instead of stopping
+  for the session on bad capability replies, extra publishers, or malformed data.
+- Command client tolerates one missed lease renewal; two consecutive misses
+  disarm. Commander prints `cut on` / `cut off` or why a command failed.
+- `esu.py`: jazzy agent image by default (`--agent-image` to override);
+  `ROS_LOCALHOST_ONLY` inherited instead of forced on; `--no-pedal` for
+  build/flash/mock.
+- Added a host runtime simulation (`firmware/test/runtime_sim.cpp`) to CI and
+  standalone variants of the native control tests. Removed lab and personal
+  identifiers from README/SETUP.
+- Review fixes: a lost ON acknowledgement is reported as "delivery unconfirmed;
+  output state unknown" instead of "NOT sent"; re-arm refuses (restart
+  required) if the board switched between pedal and standalone firmware;
+  standalone images report `offline_pedals: false`; the boot ID is 0
+  ("unknown", logger warns) unless the NVS counter write is confirmed.
+- Offline testing only. No board flashed and no ESP32 target build run here;
+  boards running the 2026-10-13 image (57600) must be reflashed.
+
+## Unreleased: shared bench firmware and host contract (2026-10-13)
+
+- Retain v1/v2/v3 as explicit pin/capability profiles over one shared runtime;
+  replace divergent per-version implementations with compatibility entry points.
+- Add independent local control task, explicit computer arming, 500 ms command
+  leases, 100 ms client renewal, and disarming on detected disconnect/expiry.
+  Preserve physical pedal control without ROS. These are provisional bench
+  settings, not validated shutdown limits or independent hardware protection.
+- Standardize new images on 57600 baud, packed Int32 telemetry, capability
+  discovery, supported-channel checks, and boot/drop metadata. Legacy firmware
+  requires an explicit read-only logger mode; command clients refuse it.
+- Add Ubuntu/Humble setup/build/runtime helper, guarded profile-specific upload,
+  native control tests, expanded Python regressions, and build-only CI matrix.
+- Pin the outer ESP32 platform/micro-ROS wrapper versions; upstream transitive
+  ROS dependencies are not fully locked. Update installation and validation docs.
+- No board flashed, PCB edited, or physical generator test performed by this
+  change. Full target builds, ROS integration, and disconnected-fixture tests
+  remain required before deployment; existing hardware safety gaps remain.
+
+## Documentation: board-power cutoff and phantom-test scope (2026-10-13)
+
+- Recorded the operator-reported board-power button and supervised phantom
+  context without claiming verified wiring, RF cessation, or test approval.
+- Distinguished computer-control cutoff/manual bypass from stop-all-energy;
+  added supply, held-pedal, stale-command, and power-restoration checks.
+- Added proposed hardware fault-handling requirements and separate firmware
+  gaps. Clarified six-relay v2 versus eight-relay v3 design identity.
+- No schematic, PCB, firmware, fabrication output, or physical test changed
+  as part of this documentation update.
+
 ## [Unreleased] — Restore v1 firmware (2026-09-15)
 
 - Restored v1 source, PlatformIO configuration and micro-ROS metadata from

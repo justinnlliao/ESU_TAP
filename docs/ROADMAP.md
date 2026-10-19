@@ -6,29 +6,41 @@ Archived proposals are not current assembly or safety specifications.
 
 ## Fault handling
 
+The [hardware fault-handling proposal](HARDWARE_FAULT_HANDLING.md) separates
+manual-pedal fallback from stop-all-energy behavior and outlines independent
+activation inhibition, fault latching, re-arm, and stuck-contact coverage.
+It is not an implemented redesign or an approved existing-board modification.
+The reported board-power cutoff still needs supply/cutoff/restart measurements.
+
 - Design and review an independent means of removing computer activation during
   controller failure while preserving manual pedal control.
 - Define sustained bypass and deliberate recovery/re-arm behavior. The current
   temporary watchdog RESET pulse does not provide this by itself.
-- Implement command expiration/controller-liveness handling and dependable
-  powered-offline pedal behavior. Agent connectivity alone is insufficient.
+- Validate the shared bench candidate's command expiration, deliberate re-arm,
+  and local pedal task independent of ROS. They are implemented in source, not
+  physically qualified; agent connectivity alone is insufficient.
 - Audit the built ESP32 firmware's internal watchdog and reset settings.
 - Record dummy-fixture fault tests before making fault-tolerance claims.
   Include stuck drivers/contacts; an MCU reset cannot repair these failures.
 
 ## Software compatibility
 
-Separate v2/v3 firmware, four-channel commander/logger support, and explicit
-revision selection in the mock/bench tests are implemented. v3 LigaSure uses
+Shared v1/v2/v3 firmware profiles, capability-aware commander/logger support, and
+explicit revision selection in the mock/bench tests are implemented. v3 LigaSure uses
 GPIO33 control, GPIO25 sense, and GPIO18 LED through R22/D12.
 
 - Run the updated tools under actual ROS 2 Humble and each firmware build.
 - Record physical channel/fault tests; offline regressions do not test ROS DDS,
   micro-ROS serial, contact behavior, or watchdog recovery.
-- Define command timeout, refresh, and deliberate re-arm semantics before a
-  coordinated firmware/client lease implementation. No timing threshold is approved.
-- Add current-state synchronization/sequence identity for late subscribers.
-- Pin firmware dependencies after a reproducible target build is verified.
+- Validate the provisional 500 ms lease / 100 ms renewal (one missed renewal
+  tolerated) and re-arm behavior. No physical response-time acceptance
+  threshold is approved.
+- Measure telemetry publish-confirmation time on the real serial link and count
+  resync baselines per session; the 50 ms confirmation window is unmeasured.
+- Capability snapshots/boot ID/drop count are implemented; add complete event
+  sequence tracking if exhaustive message-loss detection is required.
+- Verify pinned platform/wrapper target builds and capture transitive ROS
+  dependencies and agent image digest; the dependency lock is not yet complete.
 - Retain revision selection; never flash a v3 pin map onto older boards.
 
 ## Power, signals, and interfaces

@@ -1,5 +1,12 @@
 # v1 recovery and setup on a new account on blue
 
+> Historical procedure for the restored July image, not the current shared
+> firmware. As of 2026-10-13 use the [unified setup](../software/ros2/SETUP.md)
+> with `--board v1`. Current source uses 115200/packed Int32 with capability
+> discovery and explicit arm/lease, so the commands below do not apply to it;
+> the 115200/array commands below apply only to the historical image. Statements
+> about unchanged restored files below describe the September restoration.
+
 Updated 2026-09-15. Use this guide for the physical v1 board whose ESP32 was
 subsequently flashed with v2 firmware. Commands below run in Bash on blue,
 not Windows PowerShell. Substitute your clone path if it is not ~/ESU_TAP.

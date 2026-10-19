@@ -7,6 +7,9 @@ import threading
 import time
 
 CHANNELS = ('cut', 'coag', 'bipolar', 'ligasure')
+# Serial baud of every firmware profile. Must equal firmware/shared/
+# board_profile.hpp `baud` and software/esu.py BAUD (enforced by a test).
+BAUD = 115200
 
 
 def revision_channels(revision):
@@ -21,7 +24,7 @@ def require_channel(channel, available):
     return channel
 
 
-def parse_state(data):
+def parse_state(data, channel_count=None):
     """Accept either the packed-Int32 wire format or the legacy array format.
 
     Packed Int32 (current firmware): a single integer with
@@ -43,6 +46,8 @@ def parse_state(data):
     else:
         values = tuple(data)
         if len(values) == 1:
+            if not isinstance(values[0], Integral):
+                raise ValueError('Packed state must be an integer')
             packed = int(values[0])
         else:
             # Legacy array path.
@@ -52,15 +57,15 @@ def parse_state(data):
                 raise ValueError('State fields must be integers')
             if any(v not in (0, 1) for v in values[:-1]) or values[-1] not in (0, 1, 2):
                 raise ValueError('Invalid channel state or source')
+            if channel_count is not None and len(values) != channel_count + 1:
+                raise ValueError('Telemetry does not match selected board_version')
             return values[:-1], values[-1]
     # Decode packed int. Channels are bits 0..3; source is bits 4-5.
-    # CORRUPTION GUARD: only bits 0-5 are ever meaningful. A clean baseline is
-    # 0x20 (32), a clean activation is <= 0x2F. If any bit above bit 5 is set,
-    # the byte was corrupted in transit (a real risk on a noisy serial link) --
-    # reject it rather than decode garbage as a phantom "cut on". On an ESU a
-    # false activation in the log is worse than a dropped message.
+    # Schema sanity check, not an integrity check: out-of-range values may
+    # indicate corruption OR a mismatched publisher. In-range corruption and
+    # missing messages cannot be detected by this mask.
     if packed < 0 or packed > 0x3F:
-        raise ValueError(f'Corrupt packed state 0x{packed:X} (bits above 5 set)')
+        raise ValueError(f'Out-of-range packed state {packed}')
     cut = packed & 1
     coag = (packed >> 1) & 1
     bipolar = (packed >> 2) & 1
@@ -68,7 +73,12 @@ def parse_state(data):
     source = (packed >> 4) & 0x3
     if source not in (0, 1, 2):
         raise ValueError('Invalid source in packed state')
-    return (cut, coag, bipolar, ligasure), source
+    states = (cut, coag, bipolar, ligasure)
+    if channel_count is not None:
+        if channel_count not in (2, 3, 4) or any(states[channel_count:]):
+            raise ValueError('Unsupported channel active in telemetry')
+        states = states[:channel_count]
+    return states, source
 
 
 @dataclass(frozen=True)
@@ -94,7 +104,7 @@ class StateHistory:
 
     def record(self, data, received_at=None):
         received_at = time.monotonic() if received_at is None else received_at
-        states, source = parse_state(data)
+        states, source = parse_state(data, self.channel_count)
         if len(states) != self.channel_count:
             raise ValueError('Telemetry does not match selected board_version')
         with self._condition:

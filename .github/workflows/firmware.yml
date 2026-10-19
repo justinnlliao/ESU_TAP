@@ -1,0 +1,37 @@
+name: Firmware and host checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  firmware:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [v1, v2, v3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build prerequisites
+        run: sudo apt-get update && sudo apt-get install -y python3-venv python3-pip git cmake build-essential
+      - name: Native control tests (pedal and standalone builds)
+        run: |
+          for pedal in 1 0; do
+            g++ -std=c++11 -Wall -Wextra -Werror -DESU_BOARD_VERSION=${BOARD#v} -DESU_PEDAL_CONNECTED=$pedal firmware/test/control_test.cpp -o /tmp/esu-control-test
+            /tmp/esu-control-test
+          done
+        env:
+          BOARD: ${{ matrix.board }}
+      - name: Runtime simulation on host threads (pedal and standalone builds)
+        run: |
+          for pedal in 1 0; do
+            g++ -std=gnu++17 -pthread -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -Ifirmware/test/host_stubs -DESU_BOARD_VERSION=${BOARD#v} -DESU_PEDAL_CONNECTED=$pedal firmware/test/runtime_sim.cpp -o /tmp/esu-runtime-sim
+            /tmp/esu-runtime-sim
+          done
+        env:
+          BOARD: ${{ matrix.board }}
+      - name: Host regressions
+        run: python3 -B -m unittest discover -s software/ros2/src/pedal_controller/test -v
+      - name: PlatformIO setup
+        run: python3 software/esu.py setup
+      - name: Build ESP32 image (never flash)
+        run: python3 software/esu.py build --board ${{ matrix.board }}

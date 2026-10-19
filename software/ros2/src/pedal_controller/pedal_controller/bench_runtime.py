@@ -12,6 +12,8 @@ from std_srvs.srv import SetBool
 
 from pedal_controller.protocol import StateHistory, revision_channels
 from pedal_controller.service_calls import call_service
+from pedal_controller.device_client import DeviceClient
+from pedal_controller.service_calls import CallResult
 
 
 class BenchNode(Node):
@@ -22,6 +24,7 @@ class BenchNode(Node):
         self.channels = revision_channels(self.get_parameter('board_version').value)
         self.history = StateHistory(len(self.channels))
         self._esu_clients = {}
+        self.device = DeviceClient(self, self.get_parameter('board_version').value)
         self.create_subscription(Int32, '/esu/activation_state', self._on_state, 100)
 
     def _on_state(self, msg):
@@ -35,22 +38,21 @@ class BenchNode(Node):
         if self.get_parameter('fixture_confirmed').value is not True:
             raise ValueError('Requires fixture_confirmed:=true and a disconnected dummy fixture '
                              '(or an isolated software mock); no requests sent')
-        for ch in self.channels:
-            cli = self.create_client(SetBool, f'/esu/{ch}')
-            if not cli.wait_for_service(timeout_sec=3.0):
-                raise RuntimeError(f'Missing /esu/{ch}; check board_version and firmware')
-            self._esu_clients[ch] = cli
-        if not self.all_off():
-            raise RuntimeError('Initial OFF requests not acknowledged; aborting')
+        self.device.prepare()
+        self._esu_clients = self.device.clients
+        if not self.device.arm():
+            raise RuntimeError('Arm rejected: release pedals and inspect fixture')
 
     def set_channel(self, channel, on):
-        req = SetBool.Request()
-        req.data = on
-        return call_service(self._esu_clients[channel], req, 2.0)
+        sent = time.monotonic()
+        with self.device.session.lock:
+            success = self.device.session.command(channel, on)
+            if success:
+                return self.device.last_results[channel]
+        return CallResult(False, sent, None, 'Command refused or not acknowledged')
 
     def all_off(self):
-        results = [self.set_channel(ch, False).success for ch in self._esu_clients]
-        return all(results)
+        return self.device.session.all_off() if self.device.session else True
 
     def transition(self, channel, on, source=1):
         """Require a fresh, correct-width, all-channel telemetry observation."""
@@ -85,7 +87,7 @@ def run_bench(node_type, args=None):
         print(f'Test failed: {exc}')
     finally:
         try:
-            if node is not None and not node.all_off():
+            if node is not None and not node.device.close():
                 print('OFF NOT ACKNOWLEDGED. Physical state unknown.')
                 ok = False
         finally:

@@ -1,6 +1,6 @@
 # ESU-TAP v3
 
-Four-channel prototype: CUT, COAG, bipolar, and a path labeled LigaSure.
+Latest design: eight-relay, four-channel prototype for CUT, COAG, bipolar, and a path labeled LigaSure.
 Open `esu_tap_v3.kicad_pro` using KiCad 10. The current design was checked with
 KiCad 10.0.5. Local libraries use `${KIPRJMOD}` in the library tables.
 
@@ -9,15 +9,22 @@ KiCad 10.0.5. Local libraries use `${KIPRJMOD}` in the library tables.
 LigaSure uses GPIO33 control, GPIO25 sense, and GPIO18 through R22 (680 ohm)
 to yellow indicator D12. `firmware/esu-tap-v3/` implements this fourth function;
 the ROS logger/commander and revision-selectable mock/bench tools support its
-five-field state message. Physical operation, generator compatibility, and fault
+shared packed-state/capability protocol. Physical operation, generator compatibility, and fault
 recovery still require testing; software changes do not qualify the hardware.
 
 ## Protection limitations
 
 U10 RESET drives Q1, which controls bypass relays U6–U9. It does not reset the
 ESP32 or independently disable activation relays U2–U5. Watchdog RESET is
-temporary and does not guarantee sustained fallback. Powered-offline operation
-is not implemented dependably in the present firmware.
+temporary and does not guarantee sustained fallback. The shared firmware candidate
+adds local offline pedal processing and command expiry but needs physical validation.
+
+The reported external board-power cutoff is distinct from watchdog timeout:
+removing all coil power should release functioning activation relays as well as
+bypass relays. The resulting manual pedal path can still activate the generator.
+Switch wiring, alternate supplies, and restart behavior remain unverified. See
+[proposed hardware changes](../../docs/HARDWARE_FAULT_HANDLING.md) for independent
+activation inhibition and sustained fault handling; these changes are not installed.
 
 See [Protection features and validation status](../../docs/SAFETY_AND_VALIDATION.md)
 for the wiring evidence, power-loss distinction, and required tests. Do not
