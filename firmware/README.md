@@ -76,10 +76,16 @@ The pre-upload hook refuses missing board/fixture/port confirmation.
 No automated script can verify you physically disconnected the generator.
 
 The ESP32 platform and micro-ROS PlatformIO wrapper are pinned in `common.ini`.
+Each entry point sets `include_dir` to the shared headers so PlatformIO's
+dependency finder follows their includes and selects framework libraries such
+as Arduino-ESP32's bundled `Preferences`. These do not need registry entries in
+`lib_deps`. If an environment overrides `lib_deps`, include `${env.lib_deps}`
+to retain the pinned micro-ROS wrapper.
 The wrapper still fetches ROS dependency branches; this is not a complete
 dependency lock. Record resolved dependencies and the agent image digest for
 validated builds. A Linux CI matrix is provided, but adding CI is not a passing
-target-build result. Native Windows micro-ROS builds are not validated here.
+target-build result. CI builds both the root and legacy entry points for all
+three profiles. Native Windows micro-ROS builds are not validated here.
 
 ## Validation and remaining gaps
 

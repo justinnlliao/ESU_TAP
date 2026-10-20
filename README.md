@@ -170,6 +170,45 @@ unwired inputs cannot read as phantom presses. The logger reports which mode
 the board is in. In the default mode an unplugged pedal relies on the board's
 pull-ups; inputs without them float and can activate relays.
 
+## Quick run: standalone (no pedal)
+
+Generator disconnected. Replace `v2` with the actual board and `PORT` with the
+ESP32's device (`ls -l /dev/serial/by-id/`; on the lab PC, the CP2102N entry).
+Each new terminal starts with `cd ~/ESU_TAP` (or wherever your clone lives).
+
+Terminal 1, flash once (skip if already flashed with `--no-pedal`), then the agent:
+
+```bash
+docker stop esu-agent 2>/dev/null
+python3 software/esu.py flash --board v2 --port PORT --fixture-confirmed --no-pedal
+python3 software/esu.py agent --port PORT
+```
+
+Terminal 2, logger (writes `~/pedal_logs/pedal_log_<time>.csv` and `.metadata.jsonl`):
+
+```bash
+python3 software/esu.py logger --board v2
+```
+
+Terminal 3, commander: type `arm`, then c/g/b (cut/coag/bipolar), x=OFF+disarm, q=quit.
+
+```bash
+python3 software/esu.py commander --board v2 --fixture-confirmed
+```
+
+Optional latency test, in terminal 3 after quitting the commander (only one
+commanding client at a time). Repeat with `channel:=coag` / `bipolar`:
+
+```bash
+source /opt/ros/humble/setup.bash && source software/ros2/install/setup.bash
+export ROS_DOMAIN_ID=0
+ros2 run pedal_controller latency_test --ros-args \
+  -p board_version:=v2 -p fixture_confirmed:=true -p channel:=cut -p iterations:=100
+```
+
+This measures PC-side command/telemetry receipt times only, not contact or RF
+timing. To return to pedal mode, reflash without `--no-pedal` and restart the commander.
+
 ## Power and assembly
 
 Use regulated 5 V DC, center-positive barrel power for the relay rail.
