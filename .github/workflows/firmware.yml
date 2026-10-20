@@ -37,3 +37,7 @@ jobs:
         run: python3 software/esu.py setup
       - name: Build ESP32 image (never flash)
         run: python3 software/esu.py build --board ${{ matrix.board }}
+      - name: Build legacy ESP32 entry point (never flash)
+        run: '"$HOME/.platformio/penv/bin/pio" run -d "firmware/esu-tap-${BOARD}"'
+        env:
+          BOARD: ${{ matrix.board }}

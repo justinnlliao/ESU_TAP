@@ -170,44 +170,47 @@ unwired inputs cannot read as phantom presses. The logger reports which mode
 the board is in. In the default mode an unplugged pedal relies on the board's
 pull-ups; inputs without them float and can activate relays.
 
-## Quick run: standalone (no pedal)
+## Using ESU-TAP from your own ROS 2 nodes
 
-Generator disconnected. Replace `v2` with the actual board and `PORT` with the
-ESP32's device (`ls -l /dev/serial/by-id/`; on the lab PC, the CP2102N entry).
-Each new terminal starts with `cd ~/ESU_TAP` (or wherever your clone lives).
-
-Terminal 1, flash once (skip if already flashed with `--no-pedal`), then the agent:
+Generator disconnected. Flash once, then only the micro-ROS agent has to run;
+the board then appears as ordinary ROS 2 services and a topic (see
+[ROS 2 interface](#ros-2-interface)) on `ROS_DOMAIN_ID` 0.
 
 ```bash
-docker stop esu-agent 2>/dev/null
-python3 software/esu.py flash --board v2 --port PORT --fixture-confirmed --no-pedal
-python3 software/esu.py agent --port PORT
+./esu.sh flash v2 nopedal   # nopedal = only ROS drives relays; use `pedal` to keep the foot pedal
+./esu.sh agent              # leave running; the logger/commander are optional
 ```
 
-Terminal 2, logger (writes `~/pedal_logs/pedal_log_<time>.csv` and `.metadata.jsonl`):
+From any terminal or node (after `source /opt/ros/humble/setup.bash` and `export ROS_DOMAIN_ID=0`):
 
 ```bash
-python3 software/esu.py logger --board v2
+ros2 service call /esu/arm std_srvs/srv/SetBool "{data: true}"
+ros2 service call /esu/cut std_srvs/srv/SetBool "{data: true}"    # activate
+ros2 service call /esu/cut std_srvs/srv/SetBool "{data: false}"   # release
+ros2 topic echo /esu/activation_state                             # packed state, bits above
 ```
 
-Terminal 3, commander: type `arm`, then c/g/b (cut/coag/bipolar), x=OFF+disarm, q=quit.
+In your own node, create `std_srvs/srv/SetBool` clients for `/esu/arm` and the
+channel services and subscribe to `/esu/activation_state` (`std_msgs/msg/Int32`).
+No package from this repository is required for that. Call `/esu/capabilities`
+(`std_srvs/srv/Trigger`) at startup to check the board profile and channels.
 
-```bash
-python3 software/esu.py commander --board v2 --fixture-confirmed
-```
+To log while your pipeline runs, add `./esu.sh logger` in another terminal
+(writes `~/pedal_logs/pedal_log_<time>.csv` and `.metadata.jsonl`). For an
+interactive test instead of your own node, `./esu.sh run` starts the agent,
+logger and commander together (type `arm`, then c/g/b, x=OFF+disarm, q=quit).
 
-Optional latency test, in terminal 3 after quitting the commander (only one
-commanding client at a time). Repeat with `channel:=coag` / `bipolar`:
+Optional latency test (only one commanding client at a time; repeat with
+`channel:=coag` / `bipolar`):
 
 ```bash
 source /opt/ros/humble/setup.bash && source software/ros2/install/setup.bash
-export ROS_DOMAIN_ID=0
 ros2 run pedal_controller latency_test --ros-args \
   -p board_version:=v2 -p fixture_confirmed:=true -p channel:=cut -p iterations:=100
 ```
 
 This measures PC-side command/telemetry receipt times only, not contact or RF
-timing. To return to pedal mode, reflash without `--no-pedal` and restart the commander.
+timing. To return to pedal mode, `./esu.sh flash v2 pedal`.
 
 ## Power and assembly
 
