@@ -8,6 +8,16 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: one-command setup script (2026-10-20)
+
+- Added `esu.sh` at the repository root: `setup` (PlatformIO + ROS package,
+  optional Docker agent pull), `flash <v1|v2|v3> <pedal|nopedal>` with automatic
+  ESP32 port detection and a disconnected-generator prompt, `update` (pull,
+  rebuild, offer to reflash the last board/mode), `run`/`stop` (agent, logger,
+  commander in tmux), `docker`, `port`, `status`. It wraps `software/esu.py`.
+- `.gitattributes` keeps shell scripts LF; `.esu-board` (per-computer last
+  flash) is git-ignored.
+
 ## Unreleased: bench-candidate fixes (2026-10-19)
 
 - Serial baud is 115200 on every profile (was 57600), defined once in

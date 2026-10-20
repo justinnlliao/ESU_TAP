@@ -5,6 +5,12 @@ physical board's explicit v1/v2/v3 profile. The same PC package supports all thr
 No clinical qualification or full ESP32/ROS integration pass is implied.
 Keep the generator disconnected for installation, flashing and fixture tests.
 
+**Short version:** from the repository root run `./esu.sh setup`, then
+`./esu.sh flash v1 pedal` (or `nopedal`, `v2`, `v3`), then `./esu.sh run`; after a
+`git pull`, `./esu.sh update`. `esu.sh` finds the ESP32 port, asks for the
+disconnected-generator confirmation, remembers the last board/mode, and calls
+the `software/esu.py` commands described below.
+
 ## Prerequisites (one time on the Ubuntu computer)
 
 Install ROS 2 Humble and Docker using their official instructions. With your

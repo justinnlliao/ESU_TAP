@@ -29,6 +29,9 @@ log/
 # PlatformIO build artifacts (micro-ROS stack is huge -- never commit)
 .pio/
 
+# Per-computer state written by esu.sh (last flashed board/mode)
+.esu-board
+
 # Python
 __pycache__/
 *.pyc

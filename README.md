@@ -8,6 +8,27 @@ The design goals are data collection, computer activation, and manual pedal
 pass-through on board power loss. These goals are not a verified system-level
 fail-safe guarantee.
 
+## Quick start on a new computer (Ubuntu 22.04 + ROS 2 Humble)
+
+```bash
+git clone <this repo> && cd ESU_TAP
+./esu.sh setup              # once: PlatformIO + ROS package; asks whether to pull the Docker agent
+./esu.sh flash v1 pedal     # plug in the ESP32, generator DISCONNECTED (or: nopedal, v2, v3)
+./esu.sh run                # agent + logger + commander in one tmux window
+```
+
+After a `git pull` elsewhere, `./esu.sh update` pulls, rebuilds, and offers to
+reflash the board/mode last flashed from this computer. The ESP32 port is found
+automatically under `/dev/serial/by-id` (you pick if there are several).
+`./esu.sh status` shows what is installed; `./esu.sh help` lists everything.
+The script only wraps `software/esu.py`; see the [setup guide](software/ros2/SETUP.md)
+for what each step does. If `./esu.sh` says permission denied, use `bash esu.sh`.
+
+- **pedal**: a foot pedal is wired in; surgeon presses are forwarded and logged.
+- **nopedal**: standalone/autonomous; pedal inputs are ignored, only ROS drives relays.
+- **Docker**: only the micro-ROS agent uses it. `./esu.sh docker` pulls the image
+  ahead of time (optional; the first `run` pulls it otherwise).
+
 ## Current status
 
 - v1: legacy two-channel hardware remains supported by the shared v1 profile.
@@ -134,8 +155,7 @@ Use Ubuntu 22.04 / ROS Humble and a generator-disconnected fixture. From the
 repository root, with the prerequisites in [setup](software/ros2/SETUP.md):
 
 ```bash
-python3 software/esu.py setup
-python3 software/esu.py host-build
+./esu.sh setup                       # or: python3 software/esu.py setup && ... host-build
 python3 software/esu.py build --board v3
 ```
 
