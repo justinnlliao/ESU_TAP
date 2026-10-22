@@ -8,6 +8,16 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: standalone package launcher (2026-10-22)
+
+- `pedal_controller` can be copied alone into another ROS 2 workspace.
+  New `src/pedal_controller/esu_run.sh` starts the agent, logger and commander
+  in tmux (or one pane at a time) without the rest of this repository; see
+  the setup guide. Flashing still requires this repository.
+- `test_install.py` skips itself when the repository (`software/esu.py`,
+  `firmware/`) is absent, so `colcon test` passes in such a workspace.
+- CI shellchecks `esu_run.sh` alongside `esu.sh`.
+
 ## Unreleased: takeover switching and timing fields (2026-10-21, later)
 
 - Break-before-make: when outputs change, any opening output opens first and no
@@ -119,7 +129,7 @@ track alongside the board they target.
 - Restored v1 source, PlatformIO configuration and micro-ROS metadata from
   c63bfcf into a dedicated `firmware/esu-tap-v1/` project; historical contents
   preserved rather than adapting v2/v3 firmware.
-- Added [new-account recovery/setup on blue](docs/V1_BLUE_SETUP.md), including
+- Added a lab-computer recovery/setup guide (since removed), including
   USB permissions, correct v1 pin map, firmware upload, ROS build, agent/logger
   startup, and disconnected-fixture checks.
 - No PCB, v2/v3 firmware, or physical board was changed. A fresh target build

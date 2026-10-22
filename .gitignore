@@ -45,3 +45,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .history/
+
+# KiCad DRC/ERC reports (regenerate locally)
+*.rpt

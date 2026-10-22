@@ -29,8 +29,8 @@ jobs:
           done
         env:
           BOARD: ${{ matrix.board }}
-      - name: Lint esu.sh
-        run: shellcheck esu.sh
+      - name: Lint shell scripts
+        run: shellcheck esu.sh software/ros2/src/pedal_controller/esu_run.sh
       - name: Host regressions
         run: python3 -B -m unittest discover -s software/ros2/src/pedal_controller/test -v
       - name: PlatformIO setup

@@ -125,6 +125,27 @@ It does not stop unrelated lab containers. Use `docker ps` to inspect, and
 `docker stop esu-agent` to stop this agent. Never run a monitor on the same port.
 Only one board/mock and one commanding application may use a ROS domain.
 
+### Package copied into another ROS 2 workspace
+
+The `pedal_controller` package can be copied alone into another workspace's
+`src/` (dependencies: `rclpy`, `std_msgs`, `std_srvs`). Flash the board from this
+repository first. From that workspace root, `src/pedal_controller/esu_run.sh`
+replaces the helper:
+
+```bash
+bash src/pedal_controller/esu_run.sh v3 T01          # agent + logger + commander in tmux
+bash src/pedal_controller/esu_run.sh stop
+bash src/pedal_controller/esu_run.sh agent           # or one pane each, without tmux
+bash src/pedal_controller/esu_run.sh logger v3 T01
+bash src/pedal_controller/esu_run.sh commander v3
+```
+
+It sources ROS Humble and the workspace itself, uses domain `ROS_DOMAIN_ID`
+(default 0), and picks the only `/dev/serial/by-id` device (set `ESU_PORT` if
+there are several). It builds `pedal_controller` only if the workspace has never
+been built; after updating the package run `colcon build --packages-select pedal_controller`.
+It refuses to start a second `esu-agent` container.
+
 ## Capability discovery and logs
 
 `/esu/capabilities` is a read-only Trigger service. Commander refuses old or

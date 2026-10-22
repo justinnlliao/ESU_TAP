@@ -10,8 +10,12 @@ from types import ModuleType
 import unittest
 from unittest.mock import Mock, patch
 
-ROOT = Path(__file__).resolve().parents[5]
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+_PARENTS = Path(__file__).resolve().parents
+ROOT = _PARENTS[5] if len(_PARENTS) > 5 else None
+if ROOT is None or not (ROOT / 'software/esu.py').is_file():
+    # Package copied into another workspace without the ESU-TAP repository.
+    raise unittest.SkipTest('ESU-TAP repository (software/esu.py, firmware/) not present')
+sys.path.insert(0, str(_PARENTS[1]))
 spec = importlib.util.spec_from_file_location('esu_install', ROOT / 'software/esu.py')
 helper = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(helper)

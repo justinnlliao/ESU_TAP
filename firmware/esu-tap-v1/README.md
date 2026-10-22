@@ -16,7 +16,6 @@ The old directory still supports build-only `pio run -e esp32dev`.
 Flashing requires the helper's explicit board/port/disconnected-fixture confirmation.
 
 The original restoration remains traceable to commit
-`c63bfcf2c6faf4437ad764aeee6c91029624eb55`. The
-[historical blue recovery guide](../../docs/V1_BLUE_SETUP.md) documents that older
+`c63bfcf2c6faf4437ad764aeee6c91029624eb55`, which also documents that older
 image and its 115200/array interface; it is not the current install procedure.
 No physical v1 validation is established by this refactor.

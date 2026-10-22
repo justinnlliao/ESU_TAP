@@ -1,243 +1,97 @@
 # ESU-TAP: Foot Pedal Interface (micro-ROS)
 
-ESU-TAP is a research PCB interposer for reading pedal dry contacts and issuing
-computer-commanded contact closures to an electrosurgical generator's footswitch
-interface. It does not intentionally carry the RF/patient output.
+ESU-TAP is a research PCB interposer between an electrosurgical generator and its
+footswitch. It logs pedal presses and lets a computer close the same footswitch
+contacts over ROS 2, while the surgeon's pedal keeps working. It does not carry
+the RF/patient output.
 
-The design goals are data collection, computer activation, and manual pedal
-pass-through on board power loss. These goals are not a verified system-level
-fail-safe guarantee.
+> **Research prototype. Not validated for clinical use.** Board-power loss is
+> intended to fall back to the manual pedal, but this is not a verified fail-safe
+> or emergency stop. Read [Protection features and validation status](docs/SAFETY_AND_VALIDATION.md)
+> before connecting a generator, and test on a generator-disconnected fixture first.
 
-## Quick start on a new computer (Ubuntu 22.04 + ROS 2 Humble)
+## What you need
+
+- An assembled ESU-TAP board ([hardware](hardware/README.md): v1, v2 or v3) with an ESP32-DevKitC
+- Regulated 5 V DC, center-positive barrel supply for the relay rail; USB for the ESP32
+- Ubuntu 22.04 with ROS 2 Humble and Docker (Docker runs only the micro-ROS agent)
+
+## Quick start
 
 ```bash
 git clone <this repo> && cd ESU_TAP
 ./esu.sh setup              # once: PlatformIO + ROS package; asks whether to pull the Docker agent
-./esu.sh flash v1 pedal     # plug in the ESP32, generator DISCONNECTED (or: nopedal, v2, v3)
+./esu.sh flash v3 pedal     # ESP32 plugged in, generator DISCONNECTED (v1/v2/v3; pedal or nopedal)
 ./esu.sh run                # agent + logger + commander in one tmux window
 ```
 
-After a `git pull` elsewhere, `./esu.sh update` pulls, rebuilds, and offers to
-reflash the board/mode last flashed from this computer. The ESP32 port is found
-automatically under `/dev/serial/by-id` (you pick if there are several).
-`./esu.sh status` shows what is installed; `./esu.sh help` lists everything.
-The script only wraps `software/esu.py`; see the [setup guide](software/ros2/SETUP.md)
-for what each step does. If `./esu.sh` says permission denied, use `bash esu.sh`.
+In the commander type `arm`, then `c`/`g`/`b`/`l` (cut/coag/bipolar/LigaSure),
+`x` = all OFF and disarm, `q` = quit. `./esu.sh stop` stops everything.
+`./esu.sh update` pulls, rebuilds and offers to reflash; `./esu.sh help` lists
+everything. If `./esu.sh` says permission denied, use `bash esu.sh`.
 
-- **pedal** (use this one): boots in manual; the surgeon's pedal is forwarded and
-  logged. `/esu/arm` switches to autonomous (ROS drives relays). Pressing any
-  pedal while autonomous cancels all computer commands and hands control back
-  to the pedal; re-arm (pedals released) to resume autonomous. No reflash needed.
-- **nopedal**: only for boards whose pedal inputs are left unwired with no
-  pull-ups; pedal inputs are ignored, only ROS drives relays.
-- **Docker**: only the micro-ROS agent uses it. `./esu.sh docker` pulls the image
-  ahead of time (optional; the first `run` pulls it otherwise).
-
-## Current status
-
-- v1: legacy two-channel hardware remains supported by the shared v1 profile.
-- v2: six-relay CUT, COAG, and bipolar hardware and a dedicated firmware project.
-- v3: latest design, eight relays; adds a fourth hardware path labeled LigaSure. Reviewed using KiCad 10.
-  The shared v3 firmware profile implements LigaSure; generator-specific compatibility
-  and physical fault-response validation remain incomplete.
-- ROS commander/logger support all three revision interfaces. Mock and bench
-  tools select a revision explicitly. See the testing guide for scope and limits.
-
-Read [Protection features and validation status](docs/SAFETY_AND_VALIDATION.md)
-before use. This prototype is not validated for clinical use. Passing KiCad
-checks or obtaining manufacturing files does not establish fault tolerance.
-No numerical system reliability claim is supported.
-
-The 2026-10-13 [shared firmware](firmware/README.md) is a **bench candidate**:
-one implementation, explicit revision profiles, protocol-2 capability discovery,
-local pedal processing independent of ROS, and expiring/re-armed computer commands.
-It has not been flashed or physically qualified by this update. Use the
-[unified installation guide](software/ros2/SETUP.md), not historical baud/array examples.
-
-The 2026-10-19 update keeps that design and changes: 115200 baud on every
-profile; a pedal-connected (default) vs standalone/autonomous build option;
-lost telemetry is resynced with a fresh snapshot instead of dropping the link;
-the client tolerates one missed command renewal; plain operator text in the
-logger ("cut on", "coag off"); and the jazzy micro-ROS agent image. See the
-[changelog](CHANGELOG.md).
-
-## How it works
-
-During active operation, bypass relays route the pedal contacts to ESP32 sense
-inputs. External pull-ups make these active-low. The firmware drives separate
-activation relays from the sensed state OR a computer command.
-
-The activation relays close generator-side signal-to-common contacts. They do
-not move the physical pedal contacts. Published state is inferred from inputs
-and commands, not measured relay-contact closure or confirmed RF delivery.
-
-The unpowered relay topology is intended to reconnect the pedal signals and
-their respective generator commons directly. Verify this on the actual assembly.
-Manual bypass is not an emergency stop: a pressed pedal may continue activation.
-
-## Reported phantom-test setup (2026-10-13)
-
-The operator reports supervised phantom testing with the generator connected
-and a button that cuts interface-board power, not generator power. The exact
-assembled revision, switch wiring, and cutoff/restart measurements are not
-recorded here. This statement is not test approval or evidence of RF shutdown.
-
-If the button removes all relay-coil power, functioning activation relays should
-open while bypass relays restore the manual pedal path. A held pedal can still
-activate the generator; a welded contact may remain closed. Describe this as
-an intended **computer-control cutoff with manual pedal fallback**, not a
-verified stop-all-RF emergency stop. Verify USB/other supply paths and behavior
-on power restoration on a generator-disconnected fixture first.
-
-See [cutoff limitations and test records](docs/SAFETY_AND_VALIDATION.md#reported-board-power-cutoff-and-phantom-testing)
-and [proposed hardware changes](docs/HARDWARE_FAULT_HANDLING.md).
-
-## Implemented protection and known gaps
-
-The board includes input PTC/Schottky/TVS components, sense-line clamps and
-series resistors, and watchdog-controlled bypass relays. These are individual
-protection features, not evidence that the complete system is safe.
-
-In reviewed v3 wiring, U10 RESET drives Q1 and bypass relays U6–U9 only.
-It does not reset the ESP32 or independently disable activation relays U2–U5.
-A frozen activation can remain connected across the generator input and its
-common. The watchdog produces a temporary RESET pulse, not sustained fallback.
-
-Powered-offline operation is different from unpowered bypass. The shared bench
-candidate processes local pedals in a dedicated task and expires computer ON
-commands after 500 ms without renewal. Expiry/disconnect disarms computer control;
-the client renews every 100 ms, tolerates one missed renewal, and requires
-deliberate re-arm after two misses or any other fault.
-These source-level changes need full target/runtime and physical validation.
-Already-flashed historical firmware may still stop forwarding offline and latch ON.
-
-See [wiring evidence and required tests](docs/SAFETY_AND_VALIDATION.md) and
-[remaining work](docs/ROADMAP.md). Earlier blanket fail-safe claims are superseded.
-
-## ROS 2 interface
-
-| Interface | Type | Current firmware behavior |
-| --- | --- | --- |
-| `/esu/cut` | `std_srvs/srv/SetBool` | Set/clear CUT command |
-| `/esu/coag` | `std_srvs/srv/SetBool` | Set/clear COAG command |
-| `/esu/bipolar` | `std_srvs/srv/SetBool` | Set/clear bipolar command |
-| `/esu/ligasure` | `std_srvs/srv/SetBool` | Set/clear LigaSure command (v3 only) |
-| `/esu/arm` | `std_srvs/srv/SetBool` | Explicit computer arm/disarm; does not disable pedals |
-| `/esu/capabilities` | `std_srvs/srv/Trigger` | Read-only JSON profile, features, snapshot and diagnostics |
-| `/esu/activation_state` | `std_msgs/msg/Int32` | Packed inferred state stream, all profiles |
-
-All shared profiles encode CUT/COAG/bipolar/LigaSure in bits 0-3 and source in
-bits 4-5. Unavailable bits stay zero; capabilities identify the channel count.
-Source is 0 for a sensed pedal edge, 1 for a computer-derived edge, 2 for a
-boot/reconnection baseline, and 3 for a computer channel released because a
-pedal press took over (logged as `takeover`). Baseline does not necessarily
-mean a device reset. A takeover on the channel the computer was already driving
-changes no output bit, so it produces no event; the board reports `armed:false`.
-
-The logger validates capabilities and the packed schema. Explicit read-only
-legacy modes also support historical array and packed images.
-First observations and reconnection baselines are logged as `sync`, not invented
-press/release events. Messages are change-only; capability discovery supplies a
-late logger's initial snapshot. Offline transitions are not replayed, and
-telemetry does not provide exhaustive loss detection.
-Inferred effective-state edges do not capture every overlapping pedal/command action.
-
-## Repository layout
-
-- [Hardware](hardware/README.md): revision-specific KiCad projects, local libraries,
-  and `fabrication/` exports.
-- [Shared firmware](firmware/README.md): common control/runtime with v1/v2/v3
-  profiles. Old revision directories are thin compatibility entry points.
-- `software/esu.py`: path-independent setup/build/flash/agent/logger helper.
-- [ROS setup](software/ros2/SETUP.md): build, serial-agent, and development commands.
-- [Testing](software/ros2/TESTING.md): offline regressions, revision-selectable
-  mock and dummy-fixture checks, and required physical tests.
-- [Connector notes](docs/connector_documentation.md): wiring notes requiring
-  per-assembly verification.
-- [Changelog](CHANGELOG.md): history and documentation corrections.
-
-## Development quickstart
-
-Use Ubuntu 22.04 / ROS Humble and a generator-disconnected fixture. From the
-repository root, with the prerequisites in [setup](software/ros2/SETUP.md):
-
-```bash
-./esu.sh setup                       # or: python3 software/esu.py setup && ... host-build
-python3 software/esu.py build --board v3
-```
-
-Substitute the actual board revision; v1 is explicitly supported. The setup guide
-gives one command per runtime pane and guarded flashing with an explicit port.
-All profiles use 115200 baud. Command expiry is a software mitigation, not
-independent hardware shutdown. No device is flashed by building the source.
-
-One image covers manual and autonomous use. It boots in manual (pedal live,
-computer disarmed); arming enters autonomous; a debounced pedal press (30 ms)
-disarms and clears every computer command, so manual always has priority. The
-PC client's renewals are then refused and it reports that re-arm is required.
-For use with nothing wired to the pedal inputs, build/flash with `--no-pedal`:
-the sense inputs are then ignored, so unwired inputs cannot read as phantom
-presses. The logger reports which mode the board is in. In the default mode an
-unplugged pedal relies on the board's pull-ups; inputs without them float,
-can activate relays, and would also immediately cancel autonomous control.
+- **pedal** (normal): boots in manual, with the pedal forwarded and logged.
+  `/esu/arm` switches to autonomous (ROS drives the relays). Pressing any pedal
+  cancels all computer commands and hands control back; re-arm to resume.
+- **nopedal**: only for boards with nothing wired to the pedal inputs.
 
 ## Using ESU-TAP from your own ROS 2 nodes
 
-Generator disconnected. Flash once, then only the micro-ROS agent has to run;
-the board then appears as ordinary ROS 2 services and a topic (see
-[ROS 2 interface](#ros-2-interface)) on `ROS_DOMAIN_ID` 0.
+Once flashed, only the micro-ROS agent has to run (`./esu.sh agent`). The board
+then appears as ordinary services and a topic on `ROS_DOMAIN_ID` 0; no package
+from this repository is needed.
 
-```bash
-./esu.sh flash v2 pedal     # one image: manual by default, autonomous once armed, pedal overrides
-./esu.sh agent              # leave running; the logger/commander are optional
-```
-
-From any terminal or node (after `source /opt/ros/humble/setup.bash` and `export ROS_DOMAIN_ID=0`):
+| Interface | Type | Purpose |
+| --- | --- | --- |
+| `/esu/arm` | `std_srvs/srv/SetBool` | Enable/disable computer control (pedals always work) |
+| `/esu/cut`, `/esu/coag`, `/esu/bipolar` | `std_srvs/srv/SetBool` | Set/clear a channel |
+| `/esu/ligasure` | `std_srvs/srv/SetBool` | Set/clear LigaSure (v3 only) |
+| `/esu/capabilities` | `std_srvs/srv/Trigger` | JSON: board, channels, firmware, armed state |
+| `/esu/activation_state` | `std_msgs/msg/Int32` | Packed current state, published on change |
 
 ```bash
 ros2 service call /esu/arm std_srvs/srv/SetBool "{data: true}"
-ros2 service call /esu/cut std_srvs/srv/SetBool "{data: true}"    # activate
-ros2 service call /esu/cut std_srvs/srv/SetBool "{data: false}"   # release
-ros2 topic echo /esu/activation_state                             # packed state, bits above
+ros2 service call /esu/cut std_srvs/srv/SetBool "{data: true}"
+ros2 topic echo /esu/activation_state
 ```
 
-In your own node, create `std_srvs/srv/SetBool` clients for `/esu/arm` and the
-channel services and subscribe to `/esu/activation_state` (`std_msgs/msg/Int32`).
-No package from this repository is required for that. Call `/esu/capabilities`
-(`std_srvs/srv/Trigger`) at startup to check the board profile and channels.
+A computer ON command expires after 500 ms: re-send ON about every 100 ms while
+the channel should stay on. Only one node should send commands at a time.
 
-To log while your pipeline runs, add `./esu.sh logger v2 <trial-id>` in another
-terminal (writes `~/pedal_logs/pedal_log_<trial-id>_<time>.csv` and
-`.metadata.jsonl`; the trial ID is optional and also stored in the metadata). For an
-interactive test instead of your own node, `./esu.sh run` starts the agent,
-logger and commander together (type `arm`, then c/g/b, x=OFF+disarm, q=quit).
+`activation_state` bits 0-3 are CUT, COAG, bipolar, LigaSure; bits 4-5 are the
+source: 0 pedal, 1 computer, 2 boot/reconnect baseline, 3 takeover (a pedal
+press released a computer channel).
 
-Optional latency test (only one commanding client at a time; repeat with
-`channel:=coag` / `bipolar`):
+To record data alongside your node, run `./esu.sh logger v3 <trial-id>`. It
+writes `~/pedal_logs/pedal_log_<trial-id>_<time>.csv` plus a `.metadata.jsonl`.
 
-```bash
-source /opt/ros/humble/setup.bash && source software/ros2/install/setup.bash
-ros2 run pedal_controller latency_test --ros-args \
-  -p board_version:=v2 -p fixture_confirmed:=true -p channel:=cut -p iterations:=100 \
-  -p trial_id:=LAT01
-```
+### Package in another workspace
 
-This measures PC-side command/telemetry receipt times only, not contact or RF
-timing. ON and OFF are timed separately and every sample is saved to
-`~/pedal_logs/latency_<trial-id>_<channel>_<time>.csv` (warmup rows labeled).
+`software/ros2/src/pedal_controller` can be copied alone into another
+workspace's `src/` and built with colcon; it depends only on `rclpy`,
+`std_msgs` and `std_srvs`. From that workspace,
+`bash src/pedal_controller/esu_run.sh v3` starts the agent, logger and commander.
+See [setup](software/ros2/SETUP.md#package-copied-into-another-ros-2-workspace).
 
-## Power and assembly
+## How it works
 
-Use regulated 5 V DC, center-positive barrel power for the relay rail.
-USB powers the ESP32/3.3 V logic and carries serial data. In reviewed v3, the
-barrel rail does not connect to the ESP32's EXT_5V header. Loss of either supply
-must be tested separately. Input protection is not a validated wrong-voltage cutoff.
+Bypass relays route the pedal contacts to ESP32 inputs. The firmware closes
+separate activation relays on the generator side when either a pedal is pressed
+or an armed computer command is active. With board power off, the relays fall
+back to connecting the pedal straight to the generator. Published state is
+inferred from inputs and commands, not measured contact closure or RF delivery.
 
-Use the exact revision's schematic fields, PCB, and assembly BOM for part
-references. Hand-installed parts are separate from SMD assembly files.
-Review JLCPCB's placement preview and stock before approving an order; these
-checks do not resolve the functional limitations above.
+## Documentation
+
+- [Setup guide](software/ros2/SETUP.md): build, flash, agent and runtime details
+- [Testing](software/ros2/TESTING.md): offline tests, mock board, bench checks
+- [Safety and validation](docs/SAFETY_AND_VALIDATION.md): protections, known gaps, required tests
+- [Hardware](hardware/README.md) and [connector notes](docs/connector_documentation.md)
+- [Firmware](firmware/README.md): shared code with v1/v2/v3 profiles
+- [Roadmap](docs/ROADMAP.md), [fault-handling proposals](docs/HARDWARE_FAULT_HANDLING.md),
+  [enclosure](docs/ENCLOSURE_V2.md)
+- [Contributing](CONTRIBUTING.md) and [changelog](CHANGELOG.md)
 
 ## License
 
-See [LICENSE](LICENSE).
+[Apache 2.0](LICENSE).
