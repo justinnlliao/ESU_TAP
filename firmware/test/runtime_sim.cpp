@@ -29,7 +29,15 @@ unsigned long millis() {
 }
 void delay(unsigned long ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 void pinMode(int p, int m) { pin_mode[p] = m; }
-void digitalWrite(int p, int l) { if (pin_level[p] != (l ? 1 : 0)) ++pin_writes[p]; pin_level[p] = l ? 1 : 0; }
+static std::atomic<int> watch_overlap{0}, overlaps{0};
+static int relay_pin_count();
+static bool is_relay_pin(int p);
+void digitalWrite(int p, int l) {
+    if (pin_level[p] != (l ? 1 : 0)) ++pin_writes[p];
+    pin_level[p] = l ? 1 : 0;
+    // Break-before-make check: two relay outputs must never be HIGH together.
+    if (watch_overlap && l && is_relay_pin(p) && relay_pin_count() > 1) ++overlaps;
+}
 int digitalRead(int p) {
     if (floating && pin_mode[p] != OUTPUT) return rand() & 1;   // unwired input noise
     return pin_level[p];
@@ -142,6 +150,15 @@ static int call(const char* name, bool data, std::string* msg = nullptr) {
 }
 static std::vector<int> take() { std::lock_guard<std::mutex> g(pub_m); auto v = pubs; pubs.clear(); return v; }
 static int relay(unsigned i) { return pin_level[esu::pins[i].relay]; }
+static bool is_relay_pin(int p) {
+    for (unsigned i = 0; i < esu::channel_count; ++i) if (esu::pins[i].relay == p) return true;
+    return false;
+}
+static int relay_pin_count() {
+    int on = 0;
+    for (unsigned i = 0; i < esu::channel_count; ++i) on += relay(i);
+    return on;
+}
 static void press(unsigned i, bool on) { pin_level[esu::pins[i].sense] = on ? 0 : 1; }
 
 int main() {
@@ -187,6 +204,33 @@ int main() {
     delay(60); assert(relay(0) == 1);
     delay(650); assert(relay(0) == 0 && !control.armed);            // 500 ms lease expired
     assert((take() == std::vector<int>{0x11, 0x10}));
+
+    // Manual priority: pressing a pedal while autonomous drops the computer command.
+    if (esu::pedal_connected) {
+        assert(call("/esu/arm", true) == 1);
+        assert(call(esu::services[n - 1], true) == 1);
+        delay(60); assert(relay(n - 1) == 1);
+        watch_overlap = 1;
+        press(0, true); delay(60);
+        watch_overlap = 0;
+        assert(!control.armed && relay(n - 1) == 0 && relay(0) == 1);
+        assert(overlaps == 0);                                       // break-before-make
+        assert(call(esu::services[n - 1], true) == 0);              // renewal refused
+        press(0, false); delay(100);
+        const int cmd = 1 << (n - 1);
+        // Computer on; computer channel opened by takeover (source 3) BEFORE the
+        // pedal channel closes (source 0, next cycle); pedal off.
+        assert((take() == std::vector<int>{cmd | 0x10, 0x30, 0x01, 0x00}));
+
+        // Same-channel takeover: output stays closed, hand-over still reported.
+        assert(call("/esu/arm", true) == 1);
+        assert(call(esu::services[0], true) == 1);
+        delay(60);
+        press(0, true); delay(60);
+        assert(!control.armed && relay(0) == 1);
+        press(0, false); delay(100);
+        assert((take() == std::vector<int>{0x11, 0x31, 0x00}));
+    }
 
     // A failed publish is counted and resynced; the session is NOT torn down.
     if (esu::pedal_connected) {

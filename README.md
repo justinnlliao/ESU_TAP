@@ -24,8 +24,12 @@ automatically under `/dev/serial/by-id` (you pick if there are several).
 The script only wraps `software/esu.py`; see the [setup guide](software/ros2/SETUP.md)
 for what each step does. If `./esu.sh` says permission denied, use `bash esu.sh`.
 
-- **pedal**: a foot pedal is wired in; surgeon presses are forwarded and logged.
-- **nopedal**: standalone/autonomous; pedal inputs are ignored, only ROS drives relays.
+- **pedal** (use this one): boots in manual; the surgeon's pedal is forwarded and
+  logged. `/esu/arm` switches to autonomous (ROS drives relays). Pressing any
+  pedal while autonomous cancels all computer commands and hands control back
+  to the pedal; re-arm (pedals released) to resume autonomous. No reflash needed.
+- **nopedal**: only for boards whose pedal inputs are left unwired with no
+  pull-ups; pedal inputs are ignored, only ROS drives relays.
 - **Docker**: only the micro-ROS agent uses it. `./esu.sh docker` pulls the image
   ahead of time (optional; the first `run` pulls it otherwise).
 
@@ -124,8 +128,11 @@ See [wiring evidence and required tests](docs/SAFETY_AND_VALIDATION.md) and
 
 All shared profiles encode CUT/COAG/bipolar/LigaSure in bits 0-3 and source in
 bits 4-5. Unavailable bits stay zero; capabilities identify the channel count.
-Source is 0 for a sensed pedal edge, 1 for a computer-derived edge, and 2 for a
-boot/reconnection baseline. Baseline does not necessarily mean a device reset.
+Source is 0 for a sensed pedal edge, 1 for a computer-derived edge, 2 for a
+boot/reconnection baseline, and 3 for a computer channel released because a
+pedal press took over (logged as `takeover`). Baseline does not necessarily
+mean a device reset. A takeover on the channel the computer was already driving
+changes no output bit, so it produces no event; the board reports `armed:false`.
 
 The logger validates capabilities and the packed schema. Explicit read-only
 legacy modes also support historical array and packed images.
@@ -164,11 +171,15 @@ gives one command per runtime pane and guarded flashing with an explicit port.
 All profiles use 115200 baud. Command expiry is a software mitigation, not
 independent hardware shutdown. No device is flashed by building the source.
 
-Firmware assumes a pedal is connected. For standalone/autonomous use with no
-pedal, build/flash with `--no-pedal`: the sense inputs are then ignored, so
-unwired inputs cannot read as phantom presses. The logger reports which mode
-the board is in. In the default mode an unplugged pedal relies on the board's
-pull-ups; inputs without them float and can activate relays.
+One image covers manual and autonomous use. It boots in manual (pedal live,
+computer disarmed); arming enters autonomous; a debounced pedal press (30 ms)
+disarms and clears every computer command, so manual always has priority. The
+PC client's renewals are then refused and it reports that re-arm is required.
+For use with nothing wired to the pedal inputs, build/flash with `--no-pedal`:
+the sense inputs are then ignored, so unwired inputs cannot read as phantom
+presses. The logger reports which mode the board is in. In the default mode an
+unplugged pedal relies on the board's pull-ups; inputs without them float,
+can activate relays, and would also immediately cancel autonomous control.
 
 ## Using ESU-TAP from your own ROS 2 nodes
 
@@ -177,7 +188,7 @@ the board then appears as ordinary ROS 2 services and a topic (see
 [ROS 2 interface](#ros-2-interface)) on `ROS_DOMAIN_ID` 0.
 
 ```bash
-./esu.sh flash v2 nopedal   # nopedal = only ROS drives relays; use `pedal` to keep the foot pedal
+./esu.sh flash v2 pedal     # one image: manual by default, autonomous once armed, pedal overrides
 ./esu.sh agent              # leave running; the logger/commander are optional
 ```
 
@@ -195,8 +206,9 @@ channel services and subscribe to `/esu/activation_state` (`std_msgs/msg/Int32`)
 No package from this repository is required for that. Call `/esu/capabilities`
 (`std_srvs/srv/Trigger`) at startup to check the board profile and channels.
 
-To log while your pipeline runs, add `./esu.sh logger` in another terminal
-(writes `~/pedal_logs/pedal_log_<time>.csv` and `.metadata.jsonl`). For an
+To log while your pipeline runs, add `./esu.sh logger v2 <trial-id>` in another
+terminal (writes `~/pedal_logs/pedal_log_<trial-id>_<time>.csv` and
+`.metadata.jsonl`; the trial ID is optional and also stored in the metadata). For an
 interactive test instead of your own node, `./esu.sh run` starts the agent,
 logger and commander together (type `arm`, then c/g/b, x=OFF+disarm, q=quit).
 
@@ -206,11 +218,13 @@ Optional latency test (only one commanding client at a time; repeat with
 ```bash
 source /opt/ros/humble/setup.bash && source software/ros2/install/setup.bash
 ros2 run pedal_controller latency_test --ros-args \
-  -p board_version:=v2 -p fixture_confirmed:=true -p channel:=cut -p iterations:=100
+  -p board_version:=v2 -p fixture_confirmed:=true -p channel:=cut -p iterations:=100 \
+  -p trial_id:=LAT01
 ```
 
 This measures PC-side command/telemetry receipt times only, not contact or RF
-timing. To return to pedal mode, `./esu.sh flash v2 pedal`.
+timing. ON and OFF are timed separately and every sample is saved to
+`~/pedal_logs/latency_<trial-id>_<channel>_<time>.csv` (warmup rows labeled).
 
 ## Power and assembly
 

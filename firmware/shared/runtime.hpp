@@ -39,21 +39,28 @@ void control_task(void*) {
         for (unsigned i = 0; i < esu::channel_count; ++i)
             inputs[i] = digitalRead(esu::pins[i].sense) == LOW;
         const uint32_t now = millis();
-        Event changed[4]; unsigned count = 0;
+        Event changed[5]; unsigned count = 0;
         portENTER_CRITICAL(&control_lock);
-        bool previous_sensed[4];
         uint8_t previous = control.state_bits();
-        for (unsigned i = 0; i < esu::channel_count; ++i) previous_sensed[i] = control.sensed[i];
+        // sample() applies break-before-make: in one cycle outputs only open or
+        // only close, so the write order below cannot overlap two channels.
         control.sample(inputs, now);
         for (unsigned i = 0; i < esu::channel_count; ++i) {
             digitalWrite(esu::pins[i].relay, control.effective[i] ? HIGH : LOW);
             digitalWrite(esu::pins[i].led, control.effective[i] ? HIGH : LOW);
-            if (bool(previous & (1u << i)) != control.effective[i]) {
+            if (control.edge[i]) {
                 previous ^= 1u << i;
-                const int source = control.sensed[i] != previous_sensed[i] ? 0 : 1;
-                if (control.connected) changed[count++] = {previous | (source << 4), generation};
+                // Source: 0 pedal edge, 1 computer edge, 3 computer channel dropped by
+                // a pedal takeover (decided when the change was requested, so a close
+                // delayed by the interlock keeps its true cause).
+                if (control.connected)
+                    changed[count++] = {previous | (control.edge_source[i] << 4), generation};
             }
         }
+        // A takeover that opened no computer output (same channel, or nothing was
+        // commanded) is still reported: current state with source 3.
+        if (control.takeover_unchanged && control.connected)
+            changed[count++] = {int32_t(control.state_bits() | (3 << 4)), generation};
         control_ready = true;
         portEXIT_CRITICAL(&control_lock);
         for (unsigned i = 0; i < count; ++i) {
@@ -118,7 +125,7 @@ void capabilities(const void*, void* resp) {
     const uint32_t drops = dropped;
     portEXIT_CRITICAL(&control_lock);
     const int size = snprintf(capability_buffer, sizeof(capability_buffer),
-        "{\"protocol\":2,\"firmware\":\"3.0.0-bench\",\"board\":\"v%d\","
+        "{\"protocol\":2,\"firmware\":\"3.2.0-bench\",\"board\":\"v%d\","
         "\"channel_count\":%u,\"watchdog\":%s,\"baud\":%u,\"lease_ms\":%u,"
         "\"refresh_ms\":%u,\"offline_pedals\":%s,\"requires_arm\":true,"
         "\"pedal_connected\":%s,"

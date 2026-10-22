@@ -30,6 +30,8 @@ class MockEsuNode(Node):
         self.sensed = dict.fromkeys(self.channels, 0)
         self.previous_sensed = self.sensed.copy()
         self.effective = self.sensed.copy()
+        self.desired = self.sensed.copy()
+        self.cause = dict.fromkeys(self.channels, 1)
         self.armed = False
         self.boot_id = secrets.randbits(32)
         self._baseline = True
@@ -78,7 +80,7 @@ class MockEsuNode(Node):
     def _capabilities(self, request, response):
         response.success = True
         response.message = json.dumps(dict(
-            protocol=2, firmware='3.0.0-bench-mock', board=self.board,
+            protocol=2, firmware='3.2.0-bench-mock', board=self.board,
             channel_count=len(self.channels), watchdog=self.board != 'v1', baud=BAUD,
             lease_ms=500, refresh_ms=100, offline_pedals=self.pedal_connected,
             requires_arm=True, pedal_connected=self.pedal_connected,
@@ -102,11 +104,30 @@ class MockEsuNode(Node):
             self.sensed[self.sim_channel] ^= 1
         if not self.pedal_connected:   # Standalone firmware ignores pedal inputs.
             self.sensed = dict.fromkeys(self.channels, 0)
+        took_over = self.armed and any(self.sensed.values())
+        if took_over:
+            self._disarm()             # Manual priority: a press ends autonomous control.
         for ch in self.channels:
-            effective = int(self.commands[ch] or self.sensed[ch])
-            if effective != self.effective[ch]:
-                self.effective[ch] = effective
-                self._publish(0 if self.sensed[ch] != self.previous_sensed[ch] else 1)
+            want = int(self.commands[ch] or self.sensed[ch])
+            if want != self.desired[ch]:
+                self.desired[ch] = want
+                self.cause[ch] = (0 if self.sensed[ch] != self.previous_sensed[ch]
+                                  else 3 if took_over else 1)
+        # Break-before-make, as in the firmware: open first; close next tick.
+        opened = takeover_reported = False
+        for ch in self.channels:
+            if self.effective[ch] and not self.desired[ch]:
+                self.effective[ch] = 0
+                self._publish(self.cause[ch])
+                opened = True
+                takeover_reported = takeover_reported or self.cause[ch] == 3
+        if not opened:
+            for ch in self.channels:
+                if not self.effective[ch] and self.desired[ch]:
+                    self.effective[ch] = 1
+                    self._publish(self.cause[ch])
+        if took_over and not takeover_reported:
+            self._publish(3)           # Same-channel takeover: state unchanged, reported.
         self.previous_sensed = self.sensed.copy()
 
 

@@ -74,7 +74,8 @@ class CommandSession:
                 return True
             self.missed_renewals += 1
             if self.missed_renewals >= 2:
-                self.fault = 'Two renewals in a row failed; explicit re-arm required'
+                self.fault = ('Two renewals in a row failed (pedal pressed, lease expired, '
+                              'or link lost); explicit re-arm required')
                 self._disarm_locked()
             return False
 

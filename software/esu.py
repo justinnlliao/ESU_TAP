@@ -79,6 +79,8 @@ def main(argv=None):
             p.add_argument('--fixture-confirmed', action='store_true')
         if action == 'mock':
             p.add_argument('--no-pedal', action='store_true')
+        if action == 'logger':
+            p.add_argument('--trial', default='', help='Trial ID shared with the other recorders')
     args = parser.parse_args(argv)
     if hasattr(args, 'domain') and not 0 <= args.domain <= 101:
         parser.error('Use an isolated domain in range 0..101')
@@ -131,6 +133,8 @@ def main(argv=None):
         params = ['--ros-args', '-p', f'board_version:={args.board}']
         if args.action == 'commander':
             params += ['-p', 'fixture_confirmed:=true']
+        if args.action == 'logger' and args.trial:
+            params += ['-p', f'trial_id:={args.trial}']
         if args.action == 'mock' and args.no_pedal:
             params += ['-p', 'pedal_connected:=false']
         ros_command(executable, params, args.domain)

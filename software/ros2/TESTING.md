@@ -73,6 +73,9 @@ ros2 run pedal_controller latency_test --ros-args \
 disconnected low-voltage dummy fixture, not generator permission.
 Repeat each channel on each revision. Missing services/wrong-width telemetry fail.
 The benchmark aborts on failed ON/OFF checks, not silently excluding bad trials.
+ON and OFF are timed separately; every sample is written to
+`~/pedal_logs/latency_<trial_id>_<channel>_<time>.csv` (`-p trial_id:=...`,
+`-p output_dir:=...`), with warmup rows labeled. Keep these raw files.
 
 Service-response and state-message timestamps are captured independently in
 their completion/receipt handlers using the PC monotonic clock. State can arrive
@@ -104,8 +107,17 @@ supplies, domain/serial settings, repetitions, instrumentation, traces and failu
 The shared candidate implements command expiry and offline local pedal processing,
 but the external watchdog still does not independently cancel activation or reset
 the ESP32. Prototype timing and the new control task need physical validation.
-Test lease expiry by stopping the commanding process while keeping the agent
-alive, then verify a late ON is refused until deliberate re-arm. Repeat each
+Test pedal takeover: arm, command one channel, then press a different pedal,
+in both directions. The commanded relay must open BEFORE the pressed one closes
+(firmware delays the close by one 10 ms cycle); check this with both outputs on
+one scope/DAQ, since a continuity meter cannot resolve the overlap or gap.
+Re-arm must be refused while the pedal is held, and the logger must show a
+`takeover` release followed by a `surgeon` press. Repeat with the pedal on the
+commanded channel itself: the output stays closed, `armed:false`, and the
+logger writes a `takeover` row. Test lease expiry by stopping renewals WITHOUT
+cleanup (`kill -9` the commander; a normal exit sends OFF immediately) while
+keeping the agent alive; measure from the last accepted renewal, then verify a
+late ON is refused until deliberate re-arm. Repeat each
 channel/revision with a held pedal, agent loss, and reconnection on a disconnected
 fixture. Verify the pedal remains effective and commands do not revive.
 
@@ -133,6 +145,12 @@ it has to run successfully before those builds can be claimed as verified.
 Validate supply loss, agent/transport/process loss, stalls, and stuck-contact/driver
 faults on a controlled dummy fixture. This software update does not resolve them.
 
+The later 2026-10-21 update (break-before-make, same-channel takeover message,
+`monotonic_ns`) was tested offline: 55 Python tests, the native control tests
+and the runtime simulation pass for v1/v2/v3 in pedal and standalone builds.
+The simulation fails on the previous firmware (two relays HIGH together during
+a takeover). The earlier 2026-10-21 update (pedal takeover, source 3, trial
+IDs, raw ON/OFF latency CSV) passed 52 Python tests on Windows.
 The 2026-10-19 update was tested offline only: 49 Python tests pass (adding
 baud agreement across firmware/PC/helper, one tolerated missed renewal,
 operator text, a lost acknowledgement reported as unknown output state,

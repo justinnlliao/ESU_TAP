@@ -50,6 +50,42 @@ int main() {
     assert(c.arm(true)); assert(c.request(0, true, 1700));
     assert(c.request(0, false, 1701)); c.sample(inputs, 1702); assert(!c.effective[0]);
     assert(c.arm(false)); assert(!c.armed);
+    // Manual priority: a pedal press cancels autonomous commands on all channels.
+    assert(c.arm(true)); assert(c.request(1, true, 1800));
+    c.sample(inputs, 1810); assert(c.effective[1]);
+    inputs[0] = true; c.sample(inputs, 1820);
+    c.sample(inputs, 1840); assert(c.armed && c.effective[1]); // Still debouncing.
+    c.sample(inputs, 1850);
+    // Break-before-make: the computer's COAG opens (reported as takeover) but the
+    // pedal's CUT does not close in the same cycle.
+    assert(!c.armed && !c.command[1] && !c.effective[1] && !c.effective[0] && c.took_over);
+    assert(c.edge[1] && c.edge_source[1] == 3 && !c.edge[0] && !c.takeover_unchanged);
+    c.sample(inputs, 1852); assert(!c.effective[0]);                   // still interlocked
+    c.sample(inputs, 1855); assert(!c.took_over); // Flag marks only the takeover cycle.
+    assert(c.effective[0] && c.edge[0] && c.edge_source[0] == 0);     // CUT closes, pedal
+    assert(!c.request(1, true, 1860)); // Renewal refused after override.
+    assert(!c.arm(true));              // No re-arm while the pedal is held.
+    inputs[0] = false; c.sample(inputs, 1870); c.sample(inputs, 1900);
+    assert(!c.effective[0]);
+    // Same-channel takeover: output stays closed, so there is no edge, but the
+    // takeover is still flagged for the caller to report.
+    assert(c.arm(true)); assert(c.request(0, true, 2000));
+    c.sample(inputs, 2010); assert(c.effective[0] && c.edge[0] && c.edge_source[0] == 1);
+    inputs[0] = true; c.sample(inputs, 2020); c.sample(inputs, 2050);
+    assert(!c.armed && c.effective[0] && !c.edge[0] && c.took_over && c.takeover_unchanged);
+    c.sample(inputs, 2060); assert(!c.takeover_unchanged);
+    inputs[0] = false; c.sample(inputs, 2070); c.sample(inputs, 2100);
+    assert(!c.effective[0] && c.edge[0] && c.edge_source[0] == 0);
+    // A plain pedal switch between channels is also break-before-make.
+    if (esu::channel_count > 1) {
+        inputs[0] = true; c.sample(inputs, 2200); c.sample(inputs, 2230); assert(c.effective[0]);
+        inputs[0] = false; inputs[1] = true;
+        c.sample(inputs, 2240); c.sample(inputs, 2270);
+        assert(!c.effective[0] && !c.effective[1]);                    // opened, not closed
+        c.sample(inputs, 2280); assert(c.effective[1] && c.edge_source[1] == 0);
+        inputs[1] = false; c.sample(inputs, 2290); c.sample(inputs, 2320);
+        assert(c.state_bits() == 0);
+    }
     // Rollover and late request processing without an intervening sample.
     assert(c.arm(true)); assert(c.request(0, true, 0xFFFFFF00u));
     c.sample(inputs, 0xF3u); assert(c.armed);

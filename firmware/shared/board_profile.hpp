@@ -37,5 +37,9 @@ constexpr uint32_t baud = 115200;
 constexpr uint32_t lease_ms = 500; // Prototype bench setting, NOT a validated safety limit.
 constexpr uint32_t refresh_ms = 100;
 constexpr uint32_t debounce_ms = 30;
+// Break-before-make: after any output opens, no output closes for this long.
+// Shorter than the 10 ms control cycle, so a delayed close happens on the next
+// cycle; longer than the relays' few-ms release time (check the datasheet).
+constexpr uint32_t interlock_ms = 5;
 constexpr const char* services[] = {"/esu/cut", "/esu/coag", "/esu/bipolar", "/esu/ligasure"};
 }

@@ -35,6 +35,10 @@ v1 source remains in Git at `c63bfcf2c6faf4437ad764aeee6c91029624eb55`.
 - Computer commands start disarmed. `/esu/arm` (`SetBool`) explicitly arms only
   while connected, pedals released, and commands cleared. Disarm clears computer
   commands, not physical pedal input. A local pedal is never disabled by this API.
+- **Manual priority.** Boot is manual (pedal live, disarmed); arming is
+  autonomous. A debounced press on any pedal while armed disarms and clears all
+  computer commands in the same control cycle; the pedal alone then drives
+  relays. Later renewals are refused; re-arm (pedals released) to resume.
 - ON commands expire after **500 ms** without renewal. The matching PC client
   renews desired commands every **100 ms**. These are unvalidated bench defaults,
   not medical response-time guarantees. Task scheduling/failure affects actual
@@ -54,8 +58,12 @@ v1 source remains in Git at `c63bfcf2c6faf4437ad764aeee6c91029624eb55`.
   reads it at connection and after gaps, not continuously.
 - `/esu/activation_state` uses one packed `Int32` on every profile: bits 0-3 are
   CUT/COAG/bipolar/LigaSure; bits 4-5 are source (0 sensed, 1 computer-derived,
-  2 reconnect baseline). Unavailable channel bits must be zero. Capabilities,
+  2 reconnect baseline, 3 pedal takeover: the computer channel it released, or the
+  unchanged state when a takeover released no computer output). Unavailable channel bits must be zero. Capabilities,
   not unused bits, identify the channel count. No simultaneous legacy publisher.
+- Break-before-make: an opening output opens first; no output closes until
+  `interlock_ms` (5 ms) later, i.e. the next 10 ms control cycle, so two
+  channels' contacts are never driven closed together (e.g. during a takeover).
 - Telemetry is change-only with a reconnect snapshot and a bounded event queue.
   Offline edges are not buffered for replay. A full queue or a publish that is
   not confirmed within 50 ms is counted and followed by a fresh baseline

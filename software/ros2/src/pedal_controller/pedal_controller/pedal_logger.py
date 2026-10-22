@@ -14,6 +14,7 @@ metadata file; logging continues rather than stopping for the session.
 import csv
 import json
 import os
+import re
 import time
 from datetime import datetime
 import rclpy
@@ -27,18 +28,23 @@ CAPABILITY_RETRY_S = 5.0
 
 
 class PedalLogger(Node):
-    SOURCE_NAMES = {0: 'surgeon', 1: 'computer', 2: 'baseline'}
+    SOURCE_NAMES = {0: 'surgeon', 1: 'computer', 2: 'baseline', 3: 'takeover'}
     CHANNEL_ORDER = list(CHANNELS)
 
     def __init__(self):
         super().__init__('pedal_logger')
         for key, value in (('log_dir', os.path.expanduser('~/pedal_logs')),
-                           ('board_version', 'auto'), ('wire_format', 'standard')):
+                           ('board_version', 'auto'), ('wire_format', 'standard'),
+                           ('trial_id', '')):
             self.declare_parameter(key, value)
         self.expected = self.get_parameter('board_version').value
         self.wire_format = self.get_parameter('wire_format').value
         if self.wire_format not in ('standard', 'legacy_array', 'legacy_packed'):
             raise ValueError('wire_format must be standard, legacy_array, or legacy_packed')
+        # Shared with video/robot recorders for the same trial; goes in the file name.
+        self.trial_id = self.get_parameter('trial_id').value
+        if not re.fullmatch(r'[A-Za-z0-9_-]{0,64}', self.trial_id):
+            raise ValueError('trial_id: letters, digits, _ and - only (max 64)')
         self._n_channels = None
         if self.wire_format != 'standard':
             self._n_channels = len(revision_channels(self.expected))
@@ -54,15 +60,20 @@ class PedalLogger(Node):
         self._subscription = None
         directory = self.get_parameter('log_dir').value
         os.makedirs(directory, exist_ok=True)
-        stem = os.path.join(directory, 'pedal_log_' + datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+        prefix = 'pedal_log_' + (self.trial_id + '_' if self.trial_id else '')
+        stem = os.path.join(directory, prefix + datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
         self._metadata_path = stem + '.metadata.jsonl'
         self._metadata = open(self._metadata_path, 'x')
         self._file = open(stem + '.csv', 'x', newline='')
         self._writer = csv.writer(self._file)
-        self._writer.writerow(['ros_time_ns', 'event_type', 'channel', 'source', *CHANNELS])
+        # monotonic_ns (last column, so existing column positions are unchanged):
+        # this PC's monotonic clock. It never jumps, but only compares within one
+        # machine; ros_time_ns (wall clock) is what aligns with other recorders.
+        self._writer.writerow(['ros_time_ns', 'event_type', 'channel', 'source', *CHANNELS,
+                               'monotonic_ns'])
         self._file.flush()
         self._record_metadata({'event': 'logger_start', 'wire_format': self.wire_format,
-                               'selected_board': self.expected})
+                               'selected_board': self.expected, 'trial_id': self.trial_id})
         self._cap_client = self.create_client(Trigger, '/esu/capabilities')
         self.create_timer(1.0, self._poll)
         if self.wire_format != 'standard':
@@ -119,7 +130,7 @@ class PedalLogger(Node):
 
     def _record_metadata(self, data):
         self._metadata.write(json.dumps({'receipt_time_ns': self.get_clock().now().nanoseconds,
-                                         **data}) + '\n')
+                                         'monotonic_ns': time.monotonic_ns(), **data}) + '\n')
         self._metadata.flush()
 
     def _on_capabilities(self, future):
@@ -176,9 +187,14 @@ class PedalLogger(Node):
     # -- Output --
     def _emit_edge(self, channel, action, source, states, quiet=False):
         self._writer.writerow([self.get_clock().now().nanoseconds, action, channel,
-                               self.SOURCE_NAMES[source], *(states[ch] for ch in CHANNELS)])
+                               self.SOURCE_NAMES[source], *(states[ch] for ch in CHANNELS),
+                               time.monotonic_ns()])
         self._file.flush()
-        if not quiet:
+        if quiet:
+            return
+        if action == 'takeover':
+            self.get_logger().info(f'{channel}: surgeon took over (computer control ended)')
+        else:
             verb = 'on' if action == 'press' else 'off'
             self.get_logger().info(f'{channel} {verb}   ({self.SOURCE_NAMES[source]})')
 
@@ -207,9 +223,14 @@ class PedalLogger(Node):
             label = 'board resynced' if reconnect else 'board connected'
             self.get_logger().info(f'>>> {label}   active: {self._active_text(states)}')
         else:
-            for ch in CHANNELS[:self._n_channels]:
-                if states[ch] != self._last[ch]:
-                    self._emit_edge(ch, 'press' if states[ch] else 'release', source, states)
+            changed = [ch for ch in CHANNELS[:self._n_channels] if states[ch] != self._last[ch]]
+            for ch in changed:
+                self._emit_edge(ch, 'press' if states[ch] else 'release', source, states)
+            if not changed and source == 3:
+                # Takeover on a channel the computer already held: the output did
+                # not change, so record the hand-over itself on each active channel.
+                for ch in [c for c in CHANNELS[:self._n_channels] if states[c]] or ['']:
+                    self._emit_edge(ch, 'takeover', source, states)
         self._last = states
 
     def destroy_node(self):

@@ -110,6 +110,11 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(source, 1)
             self.assertEqual(len(states), count)
 
+    def test_takeover_source_packed_only(self):
+        self.assertEqual(parse_state(0x31, 2), ((1, 0), 3))
+        with self.assertRaises(ValueError):
+            parse_state([1, 0, 3])          # Legacy arrays never carried a takeover source.
+
     def test_reject_malformed(self):
         for data in ([], [0, 1], [0] * 6, [2, 0, 1], [0, 0, 3], [0.5, 0, 1]):
             with self.subTest(data=data), self.assertRaises(ValueError):
@@ -276,6 +281,8 @@ class LoggerTextTests(unittest.TestCase):
         node._emit_edge('coag', 'release', 0, states)
         lines = [c.args[0] for c in node.get_logger().info.call_args_list]
         self.assertEqual(lines, ['cut on   (computer)', 'coag off   (surgeon)'])
+        node._emit_edge('coag', 'release', 3, states)
+        self.assertEqual(node.get_logger().info.call_args.args[0], 'coag off   (takeover)')
 
 
 class BenchTests(unittest.TestCase):
@@ -300,8 +307,33 @@ class BenchTests(unittest.TestCase):
         self.assertEqual(observation.source, 1)
         self.assertEqual(observation.received_at, 10.1)
 
+    def test_latency_writes_raw_on_and_off_samples(self):
+        import csv, os, re, statistics, tempfile
+        from datetime import datetime
+        kind = load_class('latency_test.py', 'LatencyTest', BenchNode=self.bench, csv=csv, os=os,
+                          re=re, statistics=statistics, datetime=datetime,
+                          CSV_HEADER=['trial_id', 'board', 'firmware', 'channel', 'iteration',
+                                      'phase', 'on_ack_ms', 'on_state_ms', 'off_ack_ms',
+                                      'off_state_ms'])
+        with tempfile.TemporaryDirectory() as directory:
+            FakeNode.overrides = {'output_dir': directory, 'trial_id': 'T01',
+                                  'iterations': 2, 'warmup': 1, 'settle_ms': 0}
+            node = kind()
+            node.device.info = {'board': 'v3', 'firmware': '3.1.0-bench'}
+            ack = CallResult(True, 1.0, 1.002, '')
+            node.transition = Mock(return_value=(ack, SimpleNamespace(received_at=1.005)))
+            self.assertTrue(node.run())
+            [name] = os.listdir(directory)
+            self.assertTrue(name.startswith('latency_T01_cut_'))
+            with open(os.path.join(directory, name), newline='') as handle:
+                rows = list(csv.DictReader(handle))
+        self.assertEqual([r['phase'] for r in rows], ['warmup', 'measured', 'measured'])
+        self.assertEqual((rows[1]['on_ack_ms'], rows[1]['off_state_ms']), ('2.000', '5.000'))
+        self.assertEqual(rows[1]['firmware'], '3.1.0-bench')
+
     def test_latency_release_attempted_on_on_failure(self):
-        kind = load_class('latency_test.py', 'LatencyTest', BenchNode=self.bench)
+        import os
+        kind = load_class('latency_test.py', 'LatencyTest', BenchNode=self.bench, os=os)
         node = kind()
         node.transition = Mock(side_effect=[RuntimeError('lost on'), (None, None)])
         with self.assertRaises(RuntimeError):
@@ -392,6 +424,70 @@ class LeaseTests(unittest.TestCase):
             node._tick()
         self.assertFalse(node.armed)
         self.assertEqual(node.effective['cut'], 1)
+
+
+    def test_mock_pedal_press_overrides_autonomous(self):
+        FakeNode.overrides = {'board_version': 'v2'}
+        node = load_class('mock_esu_node.py', 'MockEsuNode')()
+        node._arm(SimpleNamespace(data=True), SimpleNamespace())
+        node._callback('coag')(SimpleNamespace(data=True), SimpleNamespace())
+        node._tick()
+        self.assertEqual(node.effective['coag'], 1)
+        node.sensed['cut'] = 1
+        node._tick()
+        self.assertFalse(node.armed)
+        # Break-before-make: COAG opens (takeover) this tick; CUT closes next tick.
+        self.assertEqual((node.effective['cut'], node.effective['coag']), (0, 0))
+        self.assertEqual(parse_state(node.requests[-1], 3), ((0, 0, 0), 3))
+        node._tick()
+        self.assertEqual((node.effective['cut'], node.effective['coag']), (1, 0))
+        self.assertEqual(parse_state(node.requests[-1], 3), ((1, 0, 0), 0))
+        self.assertFalse(node._callback('coag')(SimpleNamespace(data=True), SimpleNamespace()).success)
+        self.assertFalse(node._arm(SimpleNamespace(data=True), SimpleNamespace()).success)
+
+    def test_mock_same_channel_takeover_is_reported(self):
+        FakeNode.overrides = {'board_version': 'v2'}
+        node = load_class('mock_esu_node.py', 'MockEsuNode')()
+        node._arm(SimpleNamespace(data=True), SimpleNamespace())
+        node._callback('cut')(SimpleNamespace(data=True), SimpleNamespace())
+        node._tick()
+        sent = len(node.requests)
+        node.sensed['cut'] = 1
+        node._tick()
+        self.assertFalse(node.armed)
+        self.assertEqual(node.requests[sent:], [0x31])   # cut still on, source 3
+
+
+class LoggerTakeoverTests(unittest.TestCase):
+    def setUp(self):
+        kind = load_class('pedal_logger.py', 'PedalLogger')
+        self.node = kind.__new__(kind)
+        self.node._last = None
+        self.node._n_channels = 3
+        self.node.wire_format = 'standard'
+        self.node._want_caps = False
+        self.node.get_logger = Mock(return_value=Mock())
+        self.node._record_metadata = Mock()
+        self.node._file = Mock()
+        self.node._writer = Mock()
+        self.node.get_clock = Mock()
+
+    def rows(self):
+        return [c.args[0] for c in self.node._writer.writerow.call_args_list]
+
+    def test_same_channel_takeover_gets_a_row(self):
+        for packed in (0x20, 0x11, 0x31):     # sync, computer cut on, takeover unchanged
+            self.node._state_callback(SimpleNamespace(data=packed))
+        last = self.rows()[-1]
+        self.assertEqual(last[1:4], ['takeover', 'cut', 'takeover'])
+        self.assertIn('took over', self.node.get_logger().info.call_args.args[0])
+
+    def test_rows_carry_monotonic_ns_last(self):
+        before = time.monotonic_ns()
+        self.node._state_callback(SimpleNamespace(data=0x20))
+        row = self.rows()[-1]
+        self.assertEqual(len(row), 4 + len(CHANNELS) + 1)
+        self.assertGreaterEqual(row[-1], before)
 
 
 class DeviceClientTests(unittest.TestCase):
@@ -503,7 +599,7 @@ class CapabilityTests(unittest.TestCase):
             self.assertEqual(source, 1)
         with self.assertRaises(ValueError):
             parse_state(8, 3)
-        for value in ([1.2], ['1'], [-1], [64], [48]):
+        for value in ([1.2], ['1'], [-1], [64], [127]):   # 48 (0x30) is now a valid takeover
             with self.subTest(value=value), self.assertRaises(ValueError):
                 parse_state(value)
 

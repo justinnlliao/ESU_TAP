@@ -32,7 +32,7 @@ def parse_state(data, channel_count=None):
         bit 1    : coag
         bit 2    : bipolar
         bit 3    : ligasure
-        bits 4-5 : source (0/1/2)
+        bits 4-5 : source (0 pedal, 1 computer, 2 baseline, 3 takeover)
     Passed in as a 1-element sequence [packed] or a bare int.
 
     Legacy array (older firmware): [cut, coag, (bipolar,) (ligasure,) source],
@@ -71,7 +71,8 @@ def parse_state(data, channel_count=None):
     bipolar = (packed >> 2) & 1
     ligasure = (packed >> 3) & 1
     source = (packed >> 4) & 0x3
-    if source not in (0, 1, 2):
+    # 3 = a computer channel released because a pedal press ended autonomous control.
+    if source not in (0, 1, 2, 3):
         raise ValueError('Invalid source in packed state')
     states = (cut, coag, bipolar, ligasure)
     if channel_count is not None:

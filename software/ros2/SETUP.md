@@ -142,7 +142,8 @@ file; logging is not stopped.
 
 Telemetry is packed Int32: channel bits 0-3 and source bits 4-5. Logs keep the
 fixed CSV columns
-`ros_time_ns,event_type,channel,source,cut,coag,bipolar,ligasure`.
+`ros_time_ns,event_type,channel,source,cut,coag,bipolar,ligasure,monotonic_ns`
+(`event_type` adds `takeover` for a takeover that opened no computer output).
 A companion `.metadata.jsonl` records capability snapshots and discontinuities.
 First/reconnect snapshots are `sync`, not training press/release labels.
 Timestamps are PC receipt times. Offline edges and host-side message losses are

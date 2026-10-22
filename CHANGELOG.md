@@ -8,6 +8,38 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: takeover switching and timing fields (2026-10-21, later)
+
+- Break-before-make: when outputs change, any opening output opens first and no
+  output closes until `interlock_ms` (5 ms) later, i.e. the next 10 ms control
+  cycle. A different-channel takeover can no longer close the pedal's contact
+  while the computer's is still closed (previously both were driven HIGH in the
+  same cycle). Applies to any fast switch between channels, not just takeovers.
+- Edge sources are decided when a change is requested, so a close delayed by
+  the interlock keeps its true cause (pedal, computer or takeover).
+- A takeover that opens no computer output (pedal on the channel the computer
+  already held, or armed with nothing commanded) now publishes the current state
+  with source 3; the logger writes it as a `takeover` row.
+- Logger CSV gains a last column `monotonic_ns` (PC monotonic clock); every
+  metadata record carries `monotonic_ns` next to the wall-clock receipt time.
+- Firmware identity `3.2.0-bench`. Mock mirrors break-before-make and the new
+  takeover message. Native control tests, runtime simulation (now checks no two
+  relays are ever HIGH together during a takeover) and 55 Python tests pass
+  offline. No board flashed; physical overlap still needs a scope/DAQ.
+
+## Unreleased: pedal priority and data-collection fields (2026-10-21)
+
+- One image for manual and autonomous use: boots manual (pedal live, computer
+  disarmed); `/esu/arm` enters autonomous; a debounced pedal press disarms and
+  clears every computer command in the same control cycle. Re-arm requires
+  released pedals. `--no-pedal` remains only for unterminated pedal inputs.
+- New telemetry source 3 (`takeover`) on the computer channel a takeover
+  released. Firmware identity `3.1.0-bench`; package version 3.1.0.
+- Logger `trial_id` parameter (`./esu.sh logger <board> <trial-id>`): in the
+  file name and metadata.
+- `latency_test` times ON and OFF and saves every sample to a raw CSV
+  (`trial_id`, `output_dir` parameters). Mock mirrors the takeover rule.
+
 ## Unreleased: one-command setup script (2026-10-20)
 
 - Added `esu.sh` at the repository root: `setup` (PlatformIO + ROS package,

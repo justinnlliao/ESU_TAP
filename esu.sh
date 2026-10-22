@@ -6,6 +6,7 @@
 #   ./esu.sh update                git pull, rebuild, offer to reflash the last board/mode
 #   ./esu.sh agent | logger | commander | mock   start one runtime piece
 #   ./esu.sh run                   agent + logger (+ commander) in tmux panes; ./esu.sh stop
+#   ./esu.sh logger v2 T01         log with a trial ID (shared with video/robot recorders)
 #   ./esu.sh docker                pull the micro-ROS agent image (optional)
 #   ./esu.sh port                  show which ESP32 serial port would be used
 #   ./esu.sh status                what this computer has / what was last flashed
@@ -176,7 +177,11 @@ cmd_agent() {
   "${HELPER[@]}" agent --port "$port" --agent-image "$AGENT_IMAGE"
 }
 
-cmd_logger()    { "${HELPER[@]}" logger --board "$(board_or_saved "${1:-}")"; }
+cmd_logger() {
+  local flags=()
+  [[ -n "${2:-}" ]] && flags+=(--trial "$2")
+  "${HELPER[@]}" logger --board "$(board_or_saved "${1:-}")" "${flags[@]}"
+}
 cmd_commander() {
   local board; board="$(board_or_saved "${1:-}")"
   warn "Computer commands are for a disconnected test fixture (or the mock), not a live generator."
