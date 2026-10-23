@@ -98,6 +98,9 @@ It does not silently substitute CUT or accept an old snapshot. Use independent
 continuity measurements: relay clicks, LEDs and acknowledgements are insufficient.
 OFF at cleanup is best-effort and does not override a held physical pedal.
 
+The v2 results from 2026-10-22 are in
+[the test record](../../docs/SAFETY_AND_VALIDATION.md#recorded-v2-disconnected-fixture-test-2026-10-22).
+
 Run latency testing separately only after contact behavior has been checked.
 Record the exact board/assembly, firmware/software commits, dependency versions,
 supplies, domain/serial settings, repetitions, instrumentation, traces and failures.

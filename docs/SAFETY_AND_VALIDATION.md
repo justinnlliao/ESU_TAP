@@ -96,6 +96,41 @@ trials and mark reconnect gaps; missing telemetry is not evidence of inactivity.
 Normal-operation data supports only the conditions actually tested, not a
 clinical-use or system reliability claim.
 
+## Recorded v2 disconnected-fixture test (2026-10-22)
+
+Operator-reported results for one v2 board, generator unplugged, with
+independent contact measurement on the generator-side outputs. Firmware
+`3.2.0-bench` (confirmed by `/esu/capabilities`, boot IDs 13-14), source commit
+`de4fb51` plus the uncommitted `esu.sh` commander-prompt removal, pedal build,
+jazzy micro-ROS agent image, ROS domain 0. Assembly ID, supply part numbers and
+meter/scope model were not recorded. Logger file:
+`~/pedal_logs/pedal_log_T01_20261022_204146_653592.csv` (210 rows, 0 dropped
+events) on the test PC.
+
+| # | Test | Result |
+| --- | --- | --- |
+| 1 | `system_test`: every v2 channel, computer and pedal, fresh telemetry | Pass |
+| 2 | Pedal takeover both directions, same-channel takeover, re-arm refused with pedal held | Pass (7 takeover rows logged) |
+| 3 | Commander `kill -9` with agent alive: output opens on lease expiry; ON refused until re-arm | Pass |
+| 4 | Agent stopped: output opens, pedals still work, no command revival on reconnect | Pass |
+| 5 | Barrel removed, USB removed, both removed, stop button; each with computer ON and pedal held; power restored | Pass, with observation below |
+| 6 | Controller stall / firmware hang | **Not tested** |
+| 7 | Logger against measured contact behavior | Pass for the events logged; offline periods have no telemetry |
+
+**Observation (test 5, USB reconnected):** with a pedal held, plugging USB back
+in causes a short, noticeable interruption of that pedal's output before it
+recovers. The likely cause is the boot handover: the bypass relays move the
+pedal path to the board shortly after power returns, before the firmware
+control task is forwarding pedals. This interrupts activation (it opens, not
+closes) but would interrupt a held cut. Duration was not measured; use a scope
+if it matters. Avoid plugging or unplugging USB while a pedal is in use.
+
+Not covered by this record: tests 6 and sense open/short or stuck-driver faults
+(items 3 and 5 under [Verification still required](#verification-still-required)),
+v1/v3 boards, the `nopedal` build, RF cessation on an energized generator,
+release-time acceptance criteria, and repetitions. This is one bench session
+on one board, not system-level validation.
+
 See [hardware fault-handling requirements](HARDWARE_FAULT_HANDLING.md) for
 proposed changes. They are not installed fixes or approved rework instructions.
 

@@ -8,6 +8,16 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: v2 bench test record, commander prompt removed (2026-10-22, later)
+
+- `./esu.sh commander` no longer prints the disconnected-fixture warning or asks
+  whether the generator is disconnected; it starts directly. `./esu.sh flash`
+  still asks, since pins are uncontrolled while the ESP32 flashes and resets.
+- Recorded a v2 disconnected-fixture session on firmware `3.2.0-bench`: channel,
+  takeover, lease-expiry, agent-loss, power-loss and log checks pass; controller
+  stall not tested. A held pedal briefly drops out when USB is reconnected. See
+  [the test record](docs/SAFETY_AND_VALIDATION.md#recorded-v2-disconnected-fixture-test-2026-10-22).
+
 ## Unreleased: standalone package launcher (2026-10-22)
 
 - `pedal_controller` can be copied alone into another ROS 2 workspace.

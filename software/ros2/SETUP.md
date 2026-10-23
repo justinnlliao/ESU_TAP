@@ -8,7 +8,7 @@ Keep the generator disconnected for installation, flashing and fixture tests.
 **Short version:** from the repository root run `./esu.sh setup`, then
 `./esu.sh flash v1 pedal` (or `nopedal`, `v2`, `v3`), then `./esu.sh run`; after a
 `git pull`, `./esu.sh update`. `esu.sh` finds the ESP32 port, asks for the
-disconnected-generator confirmation, remembers the last board/mode, and calls
+disconnected-generator confirmation before flashing, remembers the last board/mode, and calls
 the `software/esu.py` commands described below.
 
 ## Prerequisites (one time on the Ubuntu computer)
@@ -99,7 +99,8 @@ Pane 2, read-only logger:
 python3 software/esu.py logger --board v3
 ```
 
-Pane 3, computer commands on the disconnected fixture only:
+Pane 3, computer commands (see [safety and validation](../../docs/SAFETY_AND_VALIDATION.md)
+before using them with a connected generator):
 
 ```bash
 python3 software/esu.py commander --board v3 --fixture-confirmed

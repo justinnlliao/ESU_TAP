@@ -184,8 +184,6 @@ cmd_logger() {
 }
 cmd_commander() {
   local board; board="$(board_or_saved "${1:-}")"
-  warn "Computer commands are for a disconnected test fixture (or the mock), not a live generator."
-  ask "Is the generator disconnected?" || die "Commander not started."
   "${HELPER[@]}" commander --board "$board" --fixture-confirmed
 }
 cmd_mock() {
