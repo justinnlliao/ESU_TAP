@@ -5,8 +5,10 @@
 #   ./esu.sh flash v1 pedal        build + flash: board v1|v2|v3, mode pedal|nopedal
 #   ./esu.sh update                git pull, rebuild, offer to reflash the last board/mode
 #   ./esu.sh agent | logger | commander | mock   start one runtime piece
-#   ./esu.sh run                   agent + logger (+ commander) in tmux panes; ./esu.sh stop
+#   ./esu.sh run [v2] [T01]        agent + logger + commander in tmux panes; ./esu.sh stop
 #   ./esu.sh logger v2 T01         log with a trial ID (shared with video/robot recorders)
+#   ./esu.sh mock v2               software board on ROS domain 73 (no hardware); then
+#                                  ESU_DOMAIN=73 ./esu.sh logger v2  (same for commander)
 #   ./esu.sh docker                pull the micro-ROS agent image (optional)
 #   ./esu.sh port                  show which ESP32 serial port would be used
 #   ./esu.sh status                what this computer has / what was last flashed
@@ -22,13 +24,16 @@ HELPER=(python3 "$ROOT/software/esu.py")
 STATE="$ROOT/.esu-board"
 SERIAL_DIR="${ESU_SERIAL_DIR:-/dev/serial/by-id}"
 AGENT_IMAGE="${ESU_AGENT_IMAGE:-microros/micro-ros-agent:jazzy}"
+# Logger/commander/mock ROS domain. Unset: the real board's 0 (mock: 73).
+DOMAIN_ARGS=()
+[[ -n "${ESU_DOMAIN:-}" ]] && DOMAIN_ARGS=(--domain "$ESU_DOMAIN")
 
 say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m%s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 ask()  { local reply; read -r -p "$1 [y/N] " reply || true; [[ "$reply" =~ ^[Yy]([Ee][Ss])?$ ]]; }
 
-usage() { sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,19p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 # ---------- remembered board / mode ----------
 saved_board() { [[ -f "$STATE" ]] && sed -n 's/^board=//p' "$STATE" || true; }
@@ -180,33 +185,34 @@ cmd_agent() {
 cmd_logger() {
   local flags=()
   [[ -n "${2:-}" ]] && flags+=(--trial "$2")
-  "${HELPER[@]}" logger --board "$(board_or_saved "${1:-}")" "${flags[@]}"
+  "${HELPER[@]}" logger --board "$(board_or_saved "${1:-}")" "${flags[@]}" "${DOMAIN_ARGS[@]}"
 }
 cmd_commander() {
   local board; board="$(board_or_saved "${1:-}")"
-  "${HELPER[@]}" commander --board "$board" --fixture-confirmed
+  "${HELPER[@]}" commander --board "$board" --fixture-confirmed "${DOMAIN_ARGS[@]}"
 }
 cmd_mock() {
   local board mode flags=()
   board="$(board_or_saved "${1:-}")"
   mode="$(normalize_mode "${2:-pedal}")"
   [[ "$mode" == nopedal ]] && flags+=(--no-pedal)
-  "${HELPER[@]}" mock --board "$board" "${flags[@]}"
+  say "Mock board on ROS domain ${ESU_DOMAIN:-73}. In other terminals: ESU_DOMAIN=${ESU_DOMAIN:-73} ./esu.sh logger $board"
+  "${HELPER[@]}" mock --board "$board" "${flags[@]}" "${DOMAIN_ARGS[@]}"
 }
 
 cmd_run() {
-  local board self
+  local board self trial="${2:-}"
   board="$(board_or_saved "${1:-}")"
   self="$ROOT/esu.sh"
   if ! command -v tmux >/dev/null; then
     say "tmux is not installed (sudo apt install tmux). Run these in three terminals instead:"
-    printf '  %s agent\n  %s logger %s\n  %s commander %s\n' "$self" "$self" "$board" "$self" "$board"
+    printf '  %s agent\n  %s logger %s %s\n  %s commander %s\n' "$self" "$self" "$board" "$trial" "$self" "$board"
     return
   fi
   tmux has-session -t esu 2>/dev/null && die "An 'esu' tmux session already exists: tmux attach -t esu"
   tmux new-session -d -s esu -n esu "bash '$self' agent; read -r -p 'agent exited; Enter to close'"
   sleep 2
-  tmux split-window -h -t esu "bash '$self' logger $board; read -r -p 'logger exited; Enter to close'"
+  tmux split-window -h -t esu "bash '$self' logger $board $trial; read -r -p 'logger exited; Enter to close'"
   tmux split-window -v -t esu "bash '$self' commander $board; read -r -p 'commander exited; Enter to close'"
   tmux select-layout -t esu tiled >/dev/null
   say "Started agent, logger and commander in tmux. Detach: Ctrl+B then D. Stop: ./esu.sh stop"

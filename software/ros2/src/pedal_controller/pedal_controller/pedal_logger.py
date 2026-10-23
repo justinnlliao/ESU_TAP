@@ -193,7 +193,8 @@ class PedalLogger(Node):
         if quiet:
             return
         if action == 'takeover':
-            self.get_logger().info(f'{channel}: surgeon took over (computer control ended)')
+            where = f'{channel}: ' if channel else ''
+            self.get_logger().info(f'{where}surgeon took over (computer control ended)')
         else:
             verb = 'on' if action == 'press' else 'off'
             self.get_logger().info(f'{channel} {verb}   ({self.SOURCE_NAMES[source]})')

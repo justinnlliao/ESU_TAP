@@ -27,6 +27,7 @@ git clone <this repo> && cd ESU_TAP
 
 In the commander type `arm`, then `c`/`g`/`b`/`l` (cut/coag/bipolar/LigaSure),
 `x` = all OFF and disarm, `q` = quit. `./esu.sh stop` stops everything.
+`./esu.sh run v3 T01` also passes a trial ID to the logger.
 `./esu.sh update` pulls, rebuilds and offers to reflash; `./esu.sh help` lists
 everything. If `./esu.sh` says permission denied, use `bash esu.sh`.
 
@@ -60,7 +61,8 @@ the channel should stay on. Only one node should send commands at a time.
 
 `activation_state` bits 0-3 are CUT, COAG, bipolar, LigaSure; bits 4-5 are the
 source: 0 pedal, 1 computer, 2 boot/reconnect baseline, 3 takeover (a pedal
-press released a computer channel).
+press ended computer control; sent with the released computer channel, or with
+the unchanged state when no computer output had to open).
 
 To record data alongside your node, run `./esu.sh logger v3 <trial-id>`. It
 writes `~/pedal_logs/pedal_log_<trial-id>_<time>.csv` plus a `.metadata.jsonl`.

@@ -27,6 +27,11 @@ track alongside the board they target.
 - `test_install.py` skips itself when the repository (`software/esu.py`,
   `firmware/`) is absent, so `colcon test` passes in such a workspace.
 - CI shellchecks `esu_run.sh` alongside `esu.sh`.
+- `./esu.sh run v3 T01` passes a trial ID to the logger. `ESU_DOMAIN` sets the ROS
+  domain for `./esu.sh logger`/`commander`/`mock`, so the mock (domain 73) can be
+  used from the helper (`ESU_DOMAIN=73 ./esu.sh logger v3`); the mock prints this.
+- README: source 3 also covers a takeover that opened no computer output. The
+  logger no longer prints a stray `: ` for a takeover with no active channel.
 
 ## Unreleased: takeover switching and timing fields (2026-10-21, later)
 
