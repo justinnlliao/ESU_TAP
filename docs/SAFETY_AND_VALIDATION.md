@@ -101,7 +101,7 @@ clinical-use or system reliability claim.
 Operator-reported results for one v2 board, generator unplugged, with
 independent contact measurement on the generator-side outputs. Firmware
 `3.2.0-bench` (confirmed by `/esu/capabilities`, boot IDs 13-14), source commit
-`de4fb51` plus the uncommitted `esu.sh` commander-prompt removal, pedal build,
+`dd7bd6f` plus the uncommitted `esu.sh` commander-prompt removal, pedal build,
 jazzy micro-ROS agent image, ROS domain 0. Assembly ID, supply part numbers and
 meter/scope model were not recorded. Logger file:
 `~/pedal_logs/pedal_log_T01_20261022_204146_653592.csv` (210 rows, 0 dropped
