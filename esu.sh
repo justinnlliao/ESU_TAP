@@ -36,8 +36,8 @@ ask()  { local reply; read -r -p "$1 [y/N] " reply || true; [[ "$reply" =~ ^[Yy]
 usage() { sed -n '2,19p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 # ---------- remembered board / mode ----------
-saved_board() { [[ -f "$STATE" ]] && sed -n 's/^board=//p' "$STATE" || true; }
-saved_mode()  { [[ -f "$STATE" ]] && sed -n 's/^mode=//p' "$STATE" || true; }
+saved_board() { if [[ -f "$STATE" ]]; then sed -n 's/^board=//p' "$STATE" || true; fi; }
+saved_mode()  { if [[ -f "$STATE" ]]; then sed -n 's/^mode=//p' "$STATE" || true; fi; }
 remember()    { printf 'board=%s\nmode=%s\n' "$1" "$2" > "$STATE"; }
 
 check_board() {
@@ -220,7 +220,7 @@ cmd_run() {
 }
 
 cmd_stop() {
-  command -v tmux >/dev/null && tmux kill-session -t esu 2>/dev/null || true
+  if command -v tmux >/dev/null; then tmux kill-session -t esu 2>/dev/null || true; fi
   stop_agent_if_running
   say "Stopped."
 }
