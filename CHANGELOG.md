@@ -8,6 +8,19 @@ track alongside the board they target.
 
 ---
 
+## Unreleased: documentation reorganized (2026-10-24)
+
+- User docs are now `docs/SETUP.md` (was `software/ros2/SETUP.md`),
+  `docs/SAFETY.md` (was `docs/SAFETY_AND_VALIDATION.md`) and `docs/CONNECTORS.md`.
+- Contributor docs moved to `docs/contributors/`: `TESTING.md` (was
+  `software/ros2/TESTING.md`), `ROADMAP.md`, `HARDWARE_FAULT_HANDLING.md`,
+  `ENCLOSURE_V2.md`, with an index page.
+- Repeated disclaimers and outdated "not yet flashed" statements removed; the
+  safety limits, fault table, watchdog analysis, v2 test record and required
+  tests are kept. Per-update test counts remain in this changelog only.
+- `firmware/esu-tap-v1/README.md` folded into `firmware/README.md`.
+- `esu.sh`: three lines rewritten so shellcheck (SC2015) passes; CI is green again.
+
 ## Unreleased: v2 bench test record, commander prompt removed (2026-10-22, later)
 
 - `./esu.sh commander` no longer prints the disconnected-fixture warning or asks
@@ -16,7 +29,7 @@ track alongside the board they target.
 - Recorded a v2 disconnected-fixture session on firmware `3.2.0-bench`: channel,
   takeover, lease-expiry, agent-loss, power-loss and log checks pass; controller
   stall not tested. A held pedal briefly drops out when USB is reconnected. See
-  [the test record](docs/SAFETY_AND_VALIDATION.md#recorded-v2-disconnected-fixture-test-2026-10-22).
+  [the test record](docs/SAFETY.md#recorded-v2-disconnected-fixture-test-2026-10-22).
 
 ## Unreleased: standalone package launcher (2026-10-22)
 
@@ -172,7 +185,7 @@ track alongside the board they target.
 
 - Corrected unsupported claims of guaranteed watchdog shutdown, sustained
   bypass, and powered-offline operation. See
-  [current protection and validation status](docs/SAFETY_AND_VALIDATION.md).
+  [current protection and validation status](docs/SAFETY.md).
 - Documented the current v3 watchdog wiring, incomplete LigaSure firmware,
   firmware/logger schema mismatch, and outstanding physical fault tests.
 - Converted v3 CPL headers to JLCPCB's five-column schema, preserving positions

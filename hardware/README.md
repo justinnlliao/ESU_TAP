@@ -1,29 +1,25 @@
 # Hardware
 
-Each revision contains a KiCad project and project-local libraries registered
-through `${KIPRJMOD}` in its symbol and footprint tables.
+One KiCad project per revision, with project-local libraries (`${KIPRJMOD}`
+paths in the symbol and footprint tables) and manufacturing exports in
+`fabrication/`.
 
-- [v1](esu-tap-v1/README.md): historical monopolar design.
-- [v2](esu-tap-v2/README.md): six-relay CUT/COAG/bipolar design.
-- [v3](esu-tap-v3/README.md): latest design, eight-relay four-channel prototype, reviewed using KiCad 10.
+| Revision | Relays | Channels | Notes |
+| --- | --- | --- | --- |
+| [v1](esu-tap-v1/README.md) | 3 | CUT, COAG | Original design |
+| [v2](esu-tap-v2/README.md) | 6 | CUT, COAG, bipolar | Bench-tested 2026-10-22 ([record](../docs/SAFETY.md#recorded-v2-disconnected-fixture-test-2026-10-22)) |
+| [v3](esu-tap-v3/README.md) | 8 | CUT, COAG, bipolar, LigaSure | Latest; KiCad 10 |
 
-Read [protection and validation status](../docs/SAFETY_AND_VALIDATION.md).
-Manufacturing checks are not functional or clinical-use approval. The v3
-watchdog arrangement has an independent-shutdown/sustained-bypass gap, and the
-four-channel firmware implementation has not been physically qualified.
+On v2 and v3 each channel has a bypass relay (pedal path, restored when
+unpowered) and an activation relay (closes the generator-side contact). The external
+watchdog controls only the bypass relays; see [SAFETY.md](../docs/SAFETY.md).
+Connectors and wiring: [CONNECTORS.md](../docs/CONNECTORS.md).
 
-A reported external button cuts board power, not generator power. Loss of all
-coil power is intended to remove computer activation while restoring manual
-pedal bypass; a held pedal may continue activation. Verify the actual switch,
-all supplies, and restart behavior. See the
-[proposed hardware changes](../docs/HARDWARE_FAULT_HANDLING.md); no redesign or
-qualified rework is implied by this documentation.
+## Ordering boards
 
-Revision-specific exports live in `fabrication/`. Use Gerbers, BOM, and CPL from
-the same saved design. Some generated files (including Gerbers, drill files,
-and ZIPs) are Git-ignored; do not assume a clone contains the complete release.
-
-For JLCPCB, the CPL must contain `Designator,Mid X,Mid Y,Rotation,Layer`, with
-coordinates in mm and layers Top/Bottom. Native KiCad position CSV headers may
-need conversion. Verify the reference set against the assembly BOM and confirm
-part-specific orientations in the assembler preview.
+Use Gerbers, BOM and CPL generated from the same saved design. Gerbers, drill
+files and ZIPs are Git-ignored, so generate them from KiCad. For JLCPCB the CPL
+needs `Designator,Mid X,Mid Y,Rotation,Layer` (mm, Top/Bottom); KiCad's native
+position file may need conversion. Check every polarized part's orientation and
+stock in the assembler's preview. Hand-installed parts are listed separately
+from the SMD assembly files.

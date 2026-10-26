@@ -1,6 +1,6 @@
 # Roadmap and known limitations
 
-The current status is [Protection features and validation](SAFETY_AND_VALIDATION.md).
+The current status is [Protection features and validation](../SAFETY.md).
 These items include known implementation gaps, not merely optional upgrades.
 Archived proposals are not current assembly or safety specifications.
 
@@ -16,9 +16,8 @@ The reported board-power cutoff still needs supply/cutoff/restart measurements.
   controller failure while preserving manual pedal control.
 - Define sustained bypass and deliberate recovery/re-arm behavior. The current
   temporary watchdog RESET pulse does not provide this by itself.
-- Validate the shared bench candidate's command expiration, deliberate re-arm,
-  and local pedal task independent of ROS. They are implemented in source, not
-  physically qualified; agent connectivity alone is insufficient.
+- Command expiry, deliberate re-arm and the local pedal task passed the v2 bench
+  session; repeat on other revisions and with repetitions.
 - Audit the built ESP32 firmware's internal watchdog and reset settings.
 - Record dummy-fixture fault tests before making fault-tolerance claims.
   Include stuck drivers/contacts; an MCU reset cannot repair these failures.
@@ -29,9 +28,12 @@ Shared v1/v2/v3 firmware profiles, capability-aware commander/logger support, an
 explicit revision selection in the mock/bench tests are implemented. v3 LigaSure uses
 GPIO33 control, GPIO25 sense, and GPIO18 LED through R22/D12.
 
-- Run the updated tools under actual ROS 2 Humble and each firmware build.
-- Record physical channel/fault tests; offline regressions do not test ROS DDS,
-  micro-ROS serial, contact behavior, or watchdog recovery.
+- v2 has run under ROS 2 Humble on a disconnected fixture (2026-10-22). Repeat
+  on v1 and v3, and for the `nopedal` build.
+- Record the remaining physical fault tests (controller stall, sense and
+  stuck-driver faults); offline tests do not cover them.
+- Measure and, if needed, fix the short pedal dropout when USB is reconnected
+  with a pedal held (boot handover; see the v2 test record).
 - Validate the provisional 500 ms lease / 100 ms renewal (one missed renewal
   tolerated) and re-arm behavior. No physical response-time acceptance
   threshold is approved.

@@ -1,11 +1,11 @@
-# Connector Documentation — ASG300 DRE Foot Pedal PCB
+# Connectors
 
-This document covers the connectors used on the PCB interposer and its cables.
+Assembly notes for the ASG300 DRE foot pedal setup. Confirm the connector and
+contact variants and the pin assignments for your own pedal and generator.
 
-These are historical assembly notes, not an approved wiring or safety test
-record. Confirm the exact connector/contact variants and pin assignments for
-each pedal and generator. The monopolar example below does not establish bipolar
-or LigaSure compatibility. See [current validation status](SAFETY_AND_VALIDATION.md).
+On v2, monopolar cables use the TE parts below and bipolar cables use Bulgin
+PX0412/03S panel sockets, wired to PCB terminals J1-J4; panel positions and
+dimensions are in [contributors/ENCLOSURE_V2.md](contributors/ENCLOSURE_V2.md).
 
 ## System Overview
 
@@ -57,9 +57,6 @@ Document the per-pin signal assignments here as they are finalized during schema
 - Verify connector gender and contact type before crimping — swapping socket/pin contacts is a common assembly error.
 - The panel socket (206430-1) requires a cutout in the enclosure wall; confirm the cutout diameter against the datasheet before machining.
 - After crimping, perform a continuity check through the full cable-to-PCB path before closing the enclosure.
-- The present design uses active sense-then-forward operation and an intended
-  de-energized bypass, not an electrically invisible passive monitor. Verify
-  input impedance, leakage, common routing, and contact behavior for the exact
-  generator interface. Perform initial continuity/fault tests on a disconnected
-  low-voltage dummy fixture. A passing continuity test is not isolation or
-  clinical-use approval.
+- The board actively senses and forwards the pedal; it is not an electrically
+  invisible passive monitor. Verify input impedance, leakage and common routing
+  for your generator interface, and run first tests on a disconnected dummy fixture.

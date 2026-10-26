@@ -7,7 +7,7 @@ the RF/patient output.
 
 > **Research prototype. Not validated for clinical use.** Board-power loss is
 > intended to fall back to the manual pedal, but this is not a verified fail-safe
-> or emergency stop. Read [Protection features and validation status](docs/SAFETY_AND_VALIDATION.md)
+> or emergency stop. Read [Safety and validation](docs/SAFETY.md)
 > before connecting a generator, and test on a generator-disconnected fixture first.
 
 ## What you need
@@ -73,7 +73,7 @@ writes `~/pedal_logs/pedal_log_<trial-id>_<time>.csv` plus a `.metadata.jsonl`.
 workspace's `src/` and built with colcon; it depends only on `rclpy`,
 `std_msgs` and `std_srvs`. From that workspace,
 `bash src/pedal_controller/esu_run.sh v3` starts the agent, logger and commander.
-See [setup](software/ros2/SETUP.md#package-copied-into-another-ros-2-workspace).
+See [setup](docs/SETUP.md#5-package-in-another-ros-2-workspace).
 
 ## How it works
 
@@ -85,14 +85,14 @@ inferred from inputs and commands, not measured contact closure or RF delivery.
 
 ## Documentation
 
-- [Setup guide](software/ros2/SETUP.md): build, flash, agent and runtime details
-- [Testing](software/ros2/TESTING.md): offline tests, mock board, bench checks
-- [Safety and validation](docs/SAFETY_AND_VALIDATION.md): protections, known gaps, required tests
-- [Hardware](hardware/README.md) and [connector notes](docs/connector_documentation.md)
-- [Firmware](firmware/README.md): shared code with v1/v2/v3 profiles
-- [Roadmap](docs/ROADMAP.md), [fault-handling proposals](docs/HARDWARE_FAULT_HANDLING.md),
-  [enclosure](docs/ENCLOSURE_V2.md)
-- [Contributing](CONTRIBUTING.md) and [changelog](CHANGELOG.md)
+- [Setup guide](docs/SETUP.md): build, flash, run, logs
+- [Safety and validation](docs/SAFETY.md): protections, known gaps, test record
+- [Hardware](hardware/README.md) and [connectors](docs/CONNECTORS.md)
+- [Changelog](CHANGELOG.md)
+
+For contributors: [CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/contributors/](docs/contributors/README.md) (testing, roadmap, firmware
+internals, hardware proposals, enclosure).
 
 ## License
 

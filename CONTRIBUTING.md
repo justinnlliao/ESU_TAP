@@ -8,38 +8,24 @@ contacts, so a few rules come before everything else.
 - Test on a **generator-disconnected fixture**. Never test changes on a live
   generator or anything connected to a patient.
 - Do not describe a change as making the device "safe" or "fail-safe". State what
-  was tested and how, in the terms of [docs/SAFETY_AND_VALIDATION.md](docs/SAFETY_AND_VALIDATION.md).
+  was tested and how, in the terms of [docs/SAFETY.md](docs/SAFETY.md).
 - Changes to relay, pedal, arming or command-expiry logic must say how they were
   physically verified (fixture, scope/DAQ, board revision), or state clearly that
   they were not.
 
 ## Running the tests
 
-These are the checks CI runs. None of them needs ROS or hardware.
+CI runs these on every push; none needs ROS or hardware:
 
 ```bash
-# Python package tests
-python3 -B -m unittest discover -s software/ros2/src/pedal_controller/test
-
-# Firmware control logic and runtime simulation on the host.
-# Repeat for ESU_BOARD_VERSION=1/2/3 and ESU_PEDAL_CONNECTED=1/0.
-g++ -std=c++11 -Wall -Wextra -Werror -DESU_BOARD_VERSION=3 -DESU_PEDAL_CONNECTED=1 \
-  firmware/test/control_test.cpp -o /tmp/esu-control-test && /tmp/esu-control-test
-g++ -std=gnu++17 -pthread -Wall -Wextra -Werror -Wno-unused-parameter \
-  -Wno-missing-field-initializers -Ifirmware/test/host_stubs \
-  -DESU_BOARD_VERSION=3 -DESU_PEDAL_CONNECTED=1 \
-  firmware/test/runtime_sim.cpp -o /tmp/esu-runtime-sim && /tmp/esu-runtime-sim
-
-# Firmware build for a board (does not flash)
-python3 software/esu.py setup
-python3 software/esu.py build --board v3
-
-# Shell scripts
-shellcheck esu.sh software/ros2/src/pedal_controller/esu_run.sh
+python3 -B -m unittest discover -s software/ros2/src/pedal_controller/test   # Python
+shellcheck esu.sh software/ros2/src/pedal_controller/esu_run.sh              # shell scripts
+python3 software/esu.py setup && python3 software/esu.py build --board v3    # firmware build, no flash
 ```
 
-For ROS-level testing without hardware, use the mock board described in
-[software/ros2/TESTING.md](software/ros2/TESTING.md).
+plus the firmware logic tests for every revision. The full commands, the mock
+board and the hardware test procedures are in
+[docs/contributors/TESTING.md](docs/contributors/TESTING.md).
 
 ## Pull requests
 

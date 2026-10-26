@@ -1,7 +1,7 @@
 # Proposed hardware fault-handling changes
 
 Design requirements dated 2026-10-13, **not implemented or qualified**.
-See [current protection and validation status](SAFETY_AND_VALIDATION.md).
+See [current protection and validation status](../SAFETY.md).
 No PCB, schematic, or fabrication files are changed by this proposal. A subsequent
 shared firmware candidate implements some software mitigations, not hardware fixes.
 
